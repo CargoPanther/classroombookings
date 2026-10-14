@@ -50,5 +50,16 @@ echo form_open(current_url(), array('id'=>'login','class'=>'cssform'), array('pa
 $this->load->view('partials/submit', array(
 	'submit' => array(lang('auth.log_in'), tab_index()),
 ));
+?>
 
+<?php if (! empty($microsoft_enabled)) : ?>
+<fieldset style="width:336px;">
+	<legend accesskey="M" tabindex="<?php echo tab_index() ?>"><?= lang('auth.externallogintitle') ?></legend>
+	<p>
+		<a href="<?= site_url('login/microsoft') ?>" class="button login-microsoft-link"><?= lang('auth.microsoft.loginbutton') ?></a>
+	</p>
+</fieldset>
+<?php endif; ?>
+
+<?php
 echo form_close();

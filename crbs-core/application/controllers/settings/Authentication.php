@@ -69,6 +69,134 @@ class Authentication extends MY_Controller
 	}
 
 
+	public function microsoft()
+	{
+		$this->data['title'] = lang('auth.microsoft.title');
+		$this->data['showtitle'] = '';
+
+		$this->data['settings'] = $this->settings_model->get_all('auth');
+
+		if ($this->input->post()) {
+			$this->save_microsoft();
+		}
+
+		$columns = array(
+			'c1' => array(
+				'content' => $this->load->view('settings/authentication/microsoft', $this->data, TRUE),
+				'width' => '70%',
+			),
+			'c2' => array(
+				'content' => '',
+				'width' => '30%',
+			),
+		);
+
+		$body = $this->session->flashdata('saved');
+		$body .= $this->load->view('columns', $columns, TRUE);
+
+		$this->data['body'] = '<h2>' . lang('auth.microsoft.title') . '</h2>' . $body;
+
+		return $this->render();
+	}
+
+
+	private function save_microsoft()
+	{
+		$this->load->library('form_validation');
+
+		$opt_required = '';
+		if ($this->input->post('auth_microsoft_enabled') == 1) {
+			$opt_required = 'required|';
+		}
+
+		$this->form_validation->set_rules('auth_microsoft_enabled', 'lang:auth.microsoft.field.enable', 'required|is_natural');
+		$this->form_validation->set_rules('auth_microsoft_client_id', 'lang:auth.microsoft.field.client_id', $opt_required.'max_length[255]');
+		$this->form_validation->set_rules('auth_microsoft_client_secret', 'lang:auth.microsoft.field.client_secret', $opt_required.'max_length[255]');
+		$this->form_validation->set_rules('auth_microsoft_redirect_uri', 'lang:auth.microsoft.field.redirect_uri', 'max_length[1024]|callback__valid_url_or_empty');
+		$this->form_validation->set_rules('auth_microsoft_authority', 'lang:auth.microsoft.field.authority', $opt_required.'max_length[255]');
+		$this->form_validation->set_rules('auth_microsoft_scopes', 'lang:auth.microsoft.field.scopes', 'max_length[255]');
+		$this->form_validation->set_rules('auth_microsoft_create_users', 'lang:auth.microsoft.field.create_users', 'is_natural');
+		$this->form_validation->set_rules('auth_microsoft_default_role_id', 'lang:role.role', 'callback__valid_natural_no_zero_or_empty');
+		$this->form_validation->set_rules('auth_microsoft_default_department_id', 'lang:department.department', 'callback__valid_natural_no_zero_or_empty');
+
+		if ($this->form_validation->run() == FALSE) {
+			$this->data['save_error'] = msgbox('error', lang('auth.microsoft.save.validation_failed'));
+			return FALSE;
+		}
+
+		$fields = [
+			'auth_microsoft_enabled',
+			'auth_microsoft_client_id',
+			'auth_microsoft_client_secret',
+			'auth_microsoft_redirect_uri',
+			'auth_microsoft_authority',
+			'auth_microsoft_scopes',
+			'auth_microsoft_create_users',
+			'auth_microsoft_default_role_id',
+			'auth_microsoft_default_department_id',
+		];
+
+		$settings = [];
+
+		foreach ($fields as $field) {
+			$value = $this->input->post($field);
+
+			switch ($field) {
+				case 'auth_microsoft_enabled':
+				case 'auth_microsoft_create_users':
+				case 'auth_microsoft_default_role_id':
+				case 'auth_microsoft_default_department_id':
+					$value = (int) $value;
+				break;
+			}
+
+			$settings[$field] = $value;
+		}
+
+		if (is_demo_mode()) {
+			$settings['auth_microsoft_enabled'] = 0;
+		}
+
+		$saved = $this->settings_model->set($settings, 'auth');
+		if ($saved === FALSE) {
+			$this->data['save_error'] = msgbox('error', lang('auth.microsoft.save.failure'));
+			return FALSE;
+		}
+
+		$this->session->set_flashdata('saved', msgbox('info', lang('auth.microsoft.save.success')));
+
+		redirect('settings/authentication/microsoft');
+	}
+
+	public function _valid_url_or_empty($value)
+	{
+		if ($value === '' || $value === null) {
+			return TRUE;
+		}
+
+		if (filter_var($value, FILTER_VALIDATE_URL) !== FALSE) {
+			return TRUE;
+		}
+
+		$this->form_validation->set_message('_valid_url_or_empty', lang('auth.microsoft.redirect_uri_invalid'));
+		return FALSE;
+	}
+
+	public function _valid_natural_no_zero_or_empty($value)
+	{
+		if ($value === '' || $value === null) {
+			return TRUE;
+		}
+
+		if ($value !== 0 && ctype_digit((string) $value)) {
+			return TRUE;
+		}
+
+		$this->form_validation->set_message('_valid_natural_no_zero_or_empty', lang('auth.microsoft.field.invalid_id'));
+		return FALSE;
+	}
+
+
 	public function ldap_test()
 	{
 		$config = [

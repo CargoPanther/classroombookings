@@ -144,6 +144,11 @@ class Menu_model extends CI_Model
 				'icon' => 'lock.png',
 				'url' => site_url('settings/authentication/ldap'),
 			];
+			$items['users'][] = [
+				'label' => lang('auth.microsoft.title'),
+				'icon' => 'lock.png',
+				'url' => site_url('settings/authentication/microsoft'),
+			];
 		}
 
 		if (has_permission(Permission::SYS_EXPORT_BOOKINGS)) {

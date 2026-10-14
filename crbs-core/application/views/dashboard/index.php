@@ -2,6 +2,10 @@
 
 echo $this->session->flashdata('saved');
 
+if ( ! empty($show_welcome_message)) {
+	echo $this->load->view('dashboard/welcome_message', [], TRUE);
+}
+
 echo '<h5 style="margin:14px 0px">';
 $img = img(asset_url('assets/images/ui/calendar.png'), FALSE, 'hspace="4" align="top" width="16" height="16"');
 echo anchor('bookings', $img . ' ' . lang('booking.bookings'));

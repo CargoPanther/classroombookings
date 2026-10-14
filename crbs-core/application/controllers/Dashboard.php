@@ -34,13 +34,25 @@ class Dashboard extends MY_Controller
 		$this->data['constraints'] = $this->users_model->get_constraints($user_id);
 
 		$this->data['title'] = 'Dashboard';
-		$this->data['showtitle'] = '';	//$this->data['title'];
+		$this->data['showtitle'] = ''; 	//$this->data['title'];
+		$this->data['show_welcome_message'] = ! (bool) user_setting('dashboard_welcome_hidden', $user_id);
 
 		$this->data['body'] = '';
 		$this->data['body'] .= $this->session->flashdata('auth');
 		$this->data['body'] .= $this->load->view('dashboard/index', $this->data, TRUE);
 
 		return $this->render();
+	}
+
+	public function hide_welcome_message()
+	{
+		$this->require_logged_in();
+		if ($this->input->method(TRUE) !== 'POST') {
+			show_404();
+		}
+
+		$user_id = $this->userauth->user->user_id;
+		$this->settings_model->set('dashboard_welcome_hidden', '1', sprintf('user.%d', $user_id));
 	}
 
 

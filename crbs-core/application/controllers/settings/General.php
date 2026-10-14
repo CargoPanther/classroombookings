@@ -81,6 +81,7 @@ class General extends MY_Controller
 		$this->form_validation->set_rules('timezone', 'lang:settings.general.timezone.label', 'required');
 		$this->form_validation->set_rules('login_message_enabled', 'lang:settings.general.login_message', 'is_natural');
 		$this->form_validation->set_rules('login_message_text', 'lang:settings.general.login_message', 'max_length[1024]');
+		$this->form_validation->set_rules('welcome_message_text', 'lang:settings.general.welcome_message_text', 'max_length[2048]');
 		$this->form_validation->set_rules('maintenance_mode', 'lang:settings.general.maintenance_mode', 'is_natural');
 		$this->form_validation->set_rules('maintenance_mode_message', 'lang:settings.general.maintenance_mode', 'max_length[1024]');
 
@@ -96,6 +97,8 @@ class General extends MY_Controller
 		// General
 		//
 
+		$old_welcome_message = element('welcome_message_text', $this->data['settings'], '');
+
 		$general = array(
 			'colour' => '468ED8',
 			'displaytype' => $this->input->post('displaytype'),
@@ -104,10 +107,17 @@ class General extends MY_Controller
 			'timezone' => $this->input->post('timezone'),
 			'login_message_enabled' => $this->input->post('login_message_enabled'),
 			'login_message_text' => $this->input->post('login_message_text'),
+			'welcome_message_text' => $this->input->post('welcome_message_text'),
 			'maintenance_mode' => $this->input->post('maintenance_mode'),
 			'maintenance_mode_message' => $this->input->post('maintenance_mode_message'),
 		);
 		$this->settings_model->set($general);
+
+		if ($old_welcome_message !== $general['welcome_message_text']) {
+			$this->db->where('name', 'dashboard_welcome_hidden');
+			$this->db->like('group', 'user.', 'after');
+			$this->db->delete('settings');
+		}
 
 		$dates = [
 			'pattern_long' => $this->input->post('pattern_long'),

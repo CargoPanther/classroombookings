@@ -64,6 +64,18 @@ class Userauth
 	}
 
 
+	public function log_in_user($user, $auth_method = 'local')
+	{
+		if (! is_object($user) || ! isset($user->user_id)) {
+			return FALSE;
+		}
+
+		$this->setup_session($user->user_id, $auth_method);
+		$this->touch_last_login($user->user_id);
+		return TRUE;
+	}
+
+
 	/**
 	 * Logout user and reset session data
 	 *

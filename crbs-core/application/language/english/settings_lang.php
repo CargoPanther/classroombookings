@@ -42,6 +42,9 @@ $lang['settings.general.time_format_period.label'] = 'Period time format';
 $lang['settings.general.time_format_period.hint'] = 'Time format for periods.';
 
 $lang['settings.general.login_message_text'] = 'Message';
+$lang['settings.general.welcome_message'] = 'Dashboard welcome message';
+$lang['settings.general.welcome_message_text'] = 'Dashboard welcome message';
+$lang['settings.general.welcome_message_text.hint'] = 'This message is displayed on the dashboard. Changing it resets previous “Never show again” choices so users see the updated text.';
 
 $lang['settings.general.maintenance_mode_message'] = 'Message';
 $lang['settings.general.maintenance_mode_message.hint'] = 'This is the message that will be displayed to users during maintenance mode.';

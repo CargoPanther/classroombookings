@@ -257,6 +257,30 @@ echo form_open(current_url(), array('id'=>'settings', 'class'=>'cssform'));
 
 <fieldset>
 
+	<legend accesskey="W" tabindex="<?php echo tab_index() ?>"><?= lang('settings.general.welcome_message') ?></legend>
+
+	<p id="settings_welcome_message_text">
+		<?= form_label(lang('settings.general.welcome_message_text'), 'welcome_message_text') ?>
+		<?php
+		$field = 'welcome_message_text';
+		$value = set_value($field, element($field, $settings, ''), FALSE);
+		echo form_textarea(array(
+			'name' => $field,
+			'id' => $field,
+			'rows' => '5',
+			'cols' => '60',
+			'tabindex' => tab_index(),
+			'value' => $value,
+		));
+		?>
+		<p class="hint"><?= lang('settings.general.welcome_message_text.hint') ?></p>
+	</p>
+	<?php echo form_error('welcome_message_text') ?>
+
+</fieldset>
+
+<fieldset>
+
 	<legend accesskey="M" tabindex="<?php echo tab_index() ?>"><?= lang('settings.general.maintenance_mode') ?></legend>
 
 	<div><?= lang('settings.general.maintenance_mode.hint') ?></div>

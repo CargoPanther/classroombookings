@@ -160,6 +160,32 @@ up.compiler('select[up-autocomplete]', function(selectEl) {
 	});
 });
 
+up.compiler('.dashboard-welcome-message', function(messageEl) {
+	var hideUrl = messageEl.getAttribute('data-hide-url');
+	if (!hideUrl) {
+		return;
+	}
+
+	function hideMessage() {
+		messageEl.style.display = 'none';
+	}
+
+	up.on(messageEl, 'click', '.dashboard-welcome-dismiss', function() {
+		hideMessage();
+	});
+
+	up.on(messageEl, 'click', '.dashboard-welcome-never', function() {
+		fetch(hideUrl, {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: {
+				'X-Requested-With': 'XMLHttpRequest'
+			}
+		}).catch(function() {});
+		hideMessage();
+	});
+});
+
 // up.compiler('[up-remove-row]', function(el) {
 // 	up.on(el, 'click', function(evt, el, data) {
 // 		evt.preventDefault();
