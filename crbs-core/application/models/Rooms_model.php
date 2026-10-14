@@ -333,13 +333,13 @@ class Rooms_model extends CI_Model
 				case 'CHECKBOX':
 					$val = boolval($field_values[$field->field_id] ?? 0);
 					if ($val) {
-						$img_src = asset_url('assets/images/ui/enabled.png');
+						$icon = ui_icon('enabled.png');
 						$alt = lang('app.yes');
 					} else {
-						$img_src = asset_url('assets/images/ui/no.png');
+						$icon = ui_icon('no.png');
 						$alt = lang('app.no');
 					}
-					$field_value = "<img src='{$img_src}' alt='{$alt}' up-tooltip='{$alt}' width='16' height='16' style='vertical-align:-20%'> <span style='line-height:16px'>{$alt}</span>";
+					$field_value = "<span up-tooltip='{$alt}'>{$icon} <span style='line-height:16px'>{$alt}</span></span>";
 				break;
 
 				case 'SELECT':

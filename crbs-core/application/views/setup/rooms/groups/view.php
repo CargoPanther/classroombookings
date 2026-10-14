@@ -49,7 +49,7 @@ if ($room_count > 0) {
 
 	foreach ($rooms as $room) {
 
-		$sort_img = img(asset_url('assets/images/ui/arrow_ns.png'), FALSE, "alt='sort'");
+		$sort_img = ui_icon('arrow_ns.png');
 		$sort_btn = "<div role='button' class='handle' style='cursor:grab;display:inline-block'>{$sort_img}</div>";
 		$sort_input = form_hidden('rooms[]', $room->room_id);
 		$sort_html = $sort_input . $sort_btn;
@@ -69,8 +69,7 @@ if ($room_count > 0) {
 		$photo_html = '';
 		if (!empty($room->photo) && $image_url = image_url($room->photo)) {
 			$url = site_url("rooms/photo/{$room->room_id}");
-			$icon_src = asset_url('assets/images/ui/picture.png');
-			$icon_el = "<img src='{$icon_src}' width='16' height='16' alt='".lang('room.field.photo')."'>";
+			$icon_el = ui_icon('picture.png', ['width' => '16', 'height' => '16']);
 			$photo_html = "<a href='{$url}' up-history='false' up-layer='new drawer' up-target='.room-photo' title='".lang('room.field.photo')."'>{$icon_el}</a>";
 		}
 

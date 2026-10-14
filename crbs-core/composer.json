@@ -1,4 +1,9 @@
 {
+    "autoload": {
+        "psr-4": {
+            "app\\": "application/"
+        }
+    },
     "require": {
         "league/oauth2-client": "^2.7"
     }

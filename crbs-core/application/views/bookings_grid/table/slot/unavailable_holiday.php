@@ -7,11 +7,7 @@
 		up-content="<p><?= html_escape($slot->label) ?></p><button up-dismiss><?= lang('app.ok') ?></button>"
 	>
 		<?php
-		echo img([
-			'role' => 'button',
-			'src' => asset_url('assets/images/ui/school_manage_holidays.png'),
-			'alt' => lang('holiday.holiday'),
-		]);
+		echo ui_icon('school_manage_holidays.png', ['title' => lang('holiday.holiday')]);
 		?>
 	</a>
 </td>

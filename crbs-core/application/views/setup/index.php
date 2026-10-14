@@ -22,8 +22,8 @@ foreach ($order as $group) {
 		foreach ($items as $link) {
 			echo "<li>";
 			echo '<a href="'.$link['url'].'" class="setup-menu-link">';
-			echo '<img src="' . asset_url('assets/images/ui/'.$link['icon']) . '" alt="'.$link['label'].'" width="16" height="16" />';
-			echo $link['label'];
+			echo ui_icon($link['icon'], ['width' => '16', 'height' => '16']);
+			echo html_escape($link['label']);
 			echo '</a>';
 			echo "</li>";
 		}

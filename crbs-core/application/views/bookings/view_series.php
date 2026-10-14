@@ -44,11 +44,7 @@ foreach ($all_bookings as $repeat_booking) {
 
 	$status_label = booking_status_label($repeat_booking);
 	$status_icon = booking_status_icon($repeat_booking);
-	$status = img([
-		'src' => asset_url('assets/images/ui/' . $status_icon),
-		'title' => $status_label,
-		'alt' => $status_label,
-	]);
+	$status = ui_icon($status_icon, ['title' => $status_label]);
 	$date = "<strong>" . date_output_long($repeat_booking->date) . "</strong>";
 	$notes = '';
 	if (booking_notes_viewable($repeat_booking)) {

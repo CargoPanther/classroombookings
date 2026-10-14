@@ -24,26 +24,16 @@ class Schedules extends MY_Controller
 	}
 
 
-	private function get_icons()
-	{
-		$items = [
-			['schedules', lang('schedule.schedules'), 'school_manage_times.png'],
-		];
-
-		return $items;
-	}
-
-
 	public function index()
 	{
 		$this->load->library('table');
 		$this->data['schedules'] = $this->schedules_model->get_all();
 		$this->data['title'] = lang('schedule.schedules');
 
-		$icons = iconbar($this->get_icons(), 'schedules');
+		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'schedules'], TRUE);
 		$body = $this->load->view('schedules/index', $this->data, TRUE);
 
-		$this->data['body'] = $icons . $body;
+		$this->data['body'] = $section_nav . $body;
 
 		return $this->render();
 	}
@@ -58,10 +48,10 @@ class Schedules extends MY_Controller
 			$this->save();
 		}
 
-		$icons = iconbar($this->get_icons(), 'schedules');
+		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'schedules'], TRUE);
 		$body = $this->load->view('schedules/add', $this->data, TRUE);
 
-		$this->data['body'] = $icons . $body;
+		$this->data['body'] = $section_nav . $body;
 
 		return $this->render();
 	}
@@ -78,10 +68,10 @@ class Schedules extends MY_Controller
 			$this->save($schedule_id);
 		}
 
-		$icons = iconbar($this->get_icons(), 'schedules');
+		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'schedules'], TRUE);
 		$body = $this->load->view('schedules/add', $this->data, TRUE);
 
-		$this->data['body'] = $icons . $body;
+		$this->data['body'] = $section_nav . $body;
 
 		return $this->render();
 	}
@@ -153,7 +143,8 @@ class Schedules extends MY_Controller
 		$title = "<h2>{$this->data['title']}</h2>";
 		$body = $this->load->view('partials/deleteconfirm', $this->data, TRUE);
 
-		$this->data['body'] = $title . $body;
+		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'schedules'], TRUE);
+		$this->data['body'] = $section_nav . $title . $body;
 
 		return $this->render();
 	}

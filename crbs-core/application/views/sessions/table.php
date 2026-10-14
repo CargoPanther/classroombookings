@@ -45,14 +45,14 @@
 			// Current
 			$img = '';
 			if ($session->is_current == 1) {
-				$img = img(['src' => asset_url('assets/images/ui/enabled.png'), 'width' => '16', 'height' => '16', 'alt' => lang('session.field.is_current')]);
+				$img = ui_icon('enabled.png', ['title' => lang('session.field.is_current')]);
 			}
 			echo "<td>{$img}</td>";
 
 			// Selectable
 			$img = '';
 			if ($session->is_selectable == 1) {
-				$img = img(['src' => asset_url('assets/images/ui/enabled.png'), 'width' => '16', 'height' => '16', 'alt' => lang('session.field.is_selectable')]);
+				$img = ui_icon('enabled.png', ['title' => lang('session.field.is_selectable')]);
 			}
 			echo "<td>{$img}</td>";
 

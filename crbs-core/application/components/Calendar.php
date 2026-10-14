@@ -317,13 +317,13 @@ EOS;
 		$right = FALSE;
 
 		if ($this->mode == self::MODE_NAVIGATE) {
-			$prev_img = img(asset_url('assets/images/ui/arrow_left.png'));
+			$prev_img = ui_icon('arrow_left.png');
 			$nav_prev = ($is_first)
 				? ''
 				: "<button class='nav-btn' type='button' data-dir='prev'>{$prev_img}</button>"
 				;
 
-			$next_img = img(asset_url('assets/images/ui/arrow_right.png'));
+			$next_img = ui_icon('arrow_right.png');
 			$nav_next = ($is_last)
 				? ''
 				: "<button class='nav-btn' type='button' data-dir='next'>{$next_img}</button>"

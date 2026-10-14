@@ -23,16 +23,12 @@ $this->table->set_heading([
 
 foreach ($rooms as $room) {
 	$name = html_escape($room->name);
-	$info_icon = img(asset_url('assets/images/ui/info.png'), FALSE, [
-		'alt' => '',
-		'aria-hidden' => 'true',
-		'style' => 'margin-right:5px;vertical-align:middle',
-	]);
+	$info_icon = ui_icon('info.png', ['style' => 'margin-right:5px;vertical-align:middle']);
 	$info_url = site_url('rooms/info/' . $room->room_id);
 	$link_attributes = [
 		'class' => 'room-directory-link',
 		'style' => 'display:block;min-height:1.5em;color:inherit;text-decoration:none;cursor:pointer',
-		'title' => lang('app.action.view'),
+		'title' => lang('room.room_details'),
 		'up-layer' => 'new drawer',
 		'up-position' => 'left',
 		'up-target' => '.room-info',

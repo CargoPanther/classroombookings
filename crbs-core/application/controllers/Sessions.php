@@ -43,11 +43,8 @@ class Sessions extends MY_Controller
 
 		$body = $this->load->view('sessions/index', $this->data, TRUE);
 
-		$icons = $this->load->view('sessions/_icons', [
-			'active' => 'sessions',
-		], TRUE);
-
-		$this->data['body'] = $icons . $body;
+		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'sessions'], TRUE);
+		$this->data['body'] = $section_nav . $body;
 
 		return $this->render();
 	}
@@ -94,7 +91,8 @@ class Sessions extends MY_Controller
 			$body = msgbox('error', lang('session.error.no_timetable_weeks'));
 		}
 
-		$this->data['body'] = $icons . $body;
+		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'sessions'], TRUE);
+		$this->data['body'] = $section_nav . $icons . $body;
 
 		return $this->render();
 	}
@@ -172,7 +170,8 @@ class Sessions extends MY_Controller
 
 		$icons = $this->load->view('sessions/_icons', [], TRUE);
 
-		$this->data['body'] = $icons . $body;
+		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'sessions'], TRUE);
+		$this->data['body'] = $section_nav . $icons . $body;
 
 		return $this->render();
 	}
@@ -209,7 +208,8 @@ class Sessions extends MY_Controller
 			'active' => 'sessions/edit/' . $session->session_id,
 		], TRUE);
 
-		$this->data['body'] = $icons . $body;
+		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'sessions'], TRUE);
+		$this->data['body'] = $section_nav . $icons . $body;
 
 		return $this->render();
 	}
@@ -302,7 +302,8 @@ class Sessions extends MY_Controller
 			'active' => 'sessions',
 		], TRUE);
 
-		$this->data['body'] = $icons . $title . $body;
+		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'sessions'], TRUE);
+		$this->data['body'] = $section_nav . $icons . $title . $body;
 
 		return $this->render();
 	}

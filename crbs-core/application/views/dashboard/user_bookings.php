@@ -31,9 +31,7 @@
 						? '<span class="dash-booking-notes">' . html_escape($booking->notes) . '</span>'
 						: '';
 
-					$link = img([
-						'src' => asset_url('assets/images/ui/calendar.png'),
-					]);
+					$link = ui_icon('calendar.png');
 					$uri = 'bookings?date=%s&room=%d&room_group=%d&highlight=%d';
 					$uri = sprintf($uri,
 						$booking->date->format('Y-m-d'),

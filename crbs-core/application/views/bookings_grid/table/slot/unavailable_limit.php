@@ -13,11 +13,7 @@
 			case 'past': $icon = 'date_previous.png'; break;
 			case 'future': $icon = 'date_error.png'; break;
 		}
-		echo img([
-			'role' => 'button',
-			'src' => asset_url('assets/images/ui/' . $icon),
-			'alt' => 'Limit',
-		]);
+		echo ui_icon($icon, ['title' => $slot->label]);
 		?>
 	</a>
 </td>

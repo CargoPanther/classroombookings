@@ -7,11 +7,7 @@
 		up-content="<p><?= html_escape($slot->label) ?></p><button up-dismiss><?= lang('app.ok') ?></button>"
 	>
 		<?php
-		echo img([
-			'role' => 'button',
-			'src' => asset_url('assets/images/ui/clock.png'),
-			'alt' => lang('booking.slot.unavailable_period'),
-		]);
+		echo ui_icon('clock.png', ['title' => lang('booking.slot.unavailable_period')]);
 		?>
 	</a>
 </td>

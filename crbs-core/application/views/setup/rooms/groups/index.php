@@ -43,7 +43,7 @@ if (is_array($groups)) {
 
 	foreach ($groups as $idx => $group) {
 
-		$sort_img = img(asset_url('assets/images/ui/arrow_ns.png'), FALSE, "alt='sort'");
+		$sort_img = ui_icon('arrow_ns.png');
 		$sort_btn = "<div role='button' class='handle' style='cursor:grab;display:inline-block'>{$sort_img}</div>";
 		$sort_input = form_hidden('groups[]', $group->room_group_id);
 		$sort_html = $sort_input . $sort_btn;

@@ -34,12 +34,8 @@ $this->table->set_heading([
 foreach ($users as $user) {
 
 	$img_enabled = ($user->enabled == 1) ? 'enabled.png' : 'no.png';
-	$enabled_html = img([
-		'src' => asset_url("assets/images/ui/{$img_enabled}"),
-		'width' => "16",
-		'height' => "16",
-		'alt' => $img_enabled,
-	]);
+	$enabled_label = $user->enabled == 1 ? lang('app.yes') : lang('app.no');
+	$enabled_html = ui_icon($img_enabled, ['title' => $enabled_label]);
 
 	$name = html_escape($user->username);
 	$username_html = anchor('users/edit/'.$user->user_id, $name);

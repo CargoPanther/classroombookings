@@ -3,15 +3,6 @@
 //
 
 $global_menu = $this->menu_model->global();
-$footer_menu = $global_menu;
-if (has_setup_permission()) {
-	$footer_menu[] = [
-		'label' => lang('app.whats_new') . ' ' . $this->changelog->get_indicator_markup(),
-		'url' => site_url('changelog'),
-		'icon' => 'cake.png',
-		'ext' => true,
-	];
-}
 
 ?>
 
@@ -133,11 +124,7 @@ var BASE_URL = "<?= base_url() ?>";
 					if ( ! empty($global_menu)) {
 						echo "<p class='iconbar'>";
 						foreach ($global_menu as $idx => $item) {
-							$icon = img([
-								'src' => asset_url('assets/images/ui/' . $item['icon']),
-								'align' => 'top',
-								'alt' => html_escape(strip_tags( (string) $item['label'] )),
-							]);
+							$icon = ui_icon($item['icon']);
 							$label = $icon . html_escape($item['label']);
 							echo anchor($item['url'], $label);
 						}
@@ -169,54 +156,13 @@ var BASE_URL = "<?= base_url() ?>";
 
 		<div class="footer">
 			<div id="footer">
-				<br>
-				<div class="block-group">
-					<div class="block b-60">
-						<div id="footer_links">
-							<?php
-							if ( ! empty($footer_menu)) {
-								foreach ($footer_menu as $idx => $item) {
-									$icon_url = asset_url('assets/images/ui/' . $item['icon']);
-									$alt = html_escape(strip_tags((string) $item['label']));
-									$icon = img($icon_url, FALSE, "align='top' alt='{$alt}'");
-									$attrs = '';
-									if (isset($item['ext']) && $item['ext']) {
-										$attrs .= " target='_blank' rel='noopener' ";
-									}
-									if (isset($item['id'])) {
-										$attrs .= " id='{$item['id']}' ";
-									}
-									if (isset($item['attrs'])) {
-										$attrs .= ' ' . $item['attrs'] . ' ';
-									}
-									$label = $icon . $item['label'];
-									$link = anchor($item['url'], $label, $attrs);
-									if ($item['url'] === '#') {
-										$link = str_replace(site_url('#'), '#', $link);
-									}
-									echo "{$link}\n";
-								}
-							} else {
-								echo "&nbsp;";
-							}
-							?>
-						</div>
-					</div>
-					<div class="block b-40">
-						<div style="font-size:90%;color:#678; line-height: 2; text-align:right">
-							<span>
-								<a href="https://www.classroombookings.com/" target="_blank">classroombookings</a>
-								<?= strtolower(lang('app.version')) ?>
-								<?= VERSION ?>.
-							<br>
-							&copy; <?= date('Y') ?> Craig A Rodway.</span>
-							<br />
-							<?php
-							$fmt = "%s: %s %s";
-							echo sprintf($fmt, lang('app.load_time'), $this->benchmark->elapsed_time(), lang('app.seconds'));
-							?>
-						</div>
-					</div>
+				<div class="footer-meta">
+					<span>
+						<a href="https://www.classroombookings.com/" target="_blank" rel="noopener">classroombookings</a>
+						<?= strtolower(lang('app.version')) ?> <?= VERSION ?>.
+						&copy; <?= date('Y') ?> Craig A Rodway.
+					</span>
+					<span><?php echo sprintf('%s: %s %s', lang('app.load_time'), $this->benchmark->elapsed_time(), lang('app.seconds')); ?></span>
 				</div>
 			</div>
 		</div>

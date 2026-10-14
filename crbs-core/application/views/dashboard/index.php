@@ -7,7 +7,7 @@ if ( ! empty($show_welcome_message)) {
 }
 
 echo '<h5 style="margin:14px 0px">';
-$img = img(asset_url('assets/images/ui/calendar.png'), FALSE, 'hspace="4" align="top" width="16" height="16"');
+$img = ui_icon('calendar.png', ['width' => '16', 'height' => '16']);
 echo anchor('bookings', $img . ' ' . lang('booking.bookings'));
 echo '</h5>';
 

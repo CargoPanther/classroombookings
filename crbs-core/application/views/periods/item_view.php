@@ -23,13 +23,8 @@ $total = array_sum($sizes);
 		<div class="block" style="width: <?= $sizes['bookable'] ?>%">
 			<?php
 			$bookable_img = ($period->bookable == 1) ? 'enabled.png' : 'no.png';
-			echo img([
-				'src' => asset_url("assets/images/ui/{$bookable_img}"),
-				'width' => 16,
-				'height' => 16,
-				'alt' => $bookable_img,
-				'style' => 'vertical-align:middle'
-			]);
+			$bookable_label = $period->bookable == 1 ? lang('app.yes') : lang('app.no');
+			echo ui_icon($bookable_img, ['title' => $bookable_label, 'style' => 'vertical-align:middle']);
 			?>
 		</div>
 
@@ -71,12 +66,7 @@ $total = array_sum($sizes);
 		<div class="block" style="width: <?= $sizes['actions'] ?>%; text-align:right">
 			<?php
 			$uri = site_url(sprintf('periods/edit/%d/%d', $schedule->schedule_id, $period->period_id));
-			$img = img([
-				'src' => asset_url('assets/images/ui/edit.png'),
-				'hspace' => 6,
-				'border' => 0,
-				'alt' => lang('app.action.edit'),
-			]);
+			$img = ui_icon('edit.png');
 			echo anchor($uri, $img, [
 				'title' => lang('app.action.edit'),
 				'hx-get' => $uri,

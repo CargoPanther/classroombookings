@@ -33,50 +33,34 @@
 				'type' => 'button',
 				'class' => 'btn-block',
 				'data-action' => 'select_one',
-				'content' => img([
-					'src' => asset_url('assets/images/ui/resultset_next.png'),
-					'style' => 'vertical-align: middle; margin: 3px 0;',
-					'width' => 16,
-					'height' => 16,
-					'alt' => '&rarr;',
-				]),
+				'aria-label' => 'Select one',
+				'title' => 'Select one',
+				'content' => ui_icon('resultset_next.png'),
 			]);
 			echo form_button([
 				'type' => 'button',
 				'class' => 'btn-block',
 				'data-action' => 'select_all',
-				'content' => img([
-					'src' => asset_url('assets/images/ui/forward_green.png'),
-					'style' => 'vertical-align: middle; margin: 3px 0;',
-					'width' => 16,
-					'height' => 16,
-					'alt' => '&ldquo;',
-				]),
+				'aria-label' => 'Select all',
+				'title' => 'Select all',
+				'content' => ui_icon('forward_green.png'),
 			]);
 			echo "<br>";
 			echo form_button([
 				'type' => 'button',
 				'class' => 'btn-block',
 				'data-action' => 'remove_one',
-				'content' => img([
-					'src' => asset_url('assets/images/ui/resultset_previous.png'),
-					'style' => 'vertical-align: middle; margin: 3px 0;',
-					'width' => 16,
-					'height' => 16,
-					'alt' => '&rarr;',
-				]),
+				'aria-label' => 'Remove one',
+				'title' => 'Remove one',
+				'content' => ui_icon('resultset_previous.png'),
 			]);
 			echo form_button([
 				'type' => 'button',
 				'class' => 'btn-block',
 				'data-action' => 'remove_all',
-				'content' => img([
-					'src' => asset_url('assets/images/ui/rewind_green.png'),
-					'style' => 'vertical-align: middle; margin: 3px 0;',
-					'width' => 16,
-					'height' => 16,
-					'alt' => '&ldquo;',
-				]),
+				'aria-label' => 'Remove all',
+				'title' => 'Remove all',
+				'content' => ui_icon('rewind_green.png'),
 			]);
 			?>
 		</div>

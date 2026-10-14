@@ -22,9 +22,7 @@ if ($slot->conflict_count === 0) {
 	);
 }
 
-$img = img([
-	'src' => asset_url('assets/images/ui/' . $icon_name),
-	'alt' => $title,
+$img = ui_icon($icon_name, [
 	'title' => $title,
 	'style' => 'display:inline-block;margin-top:4px;',
 ]);

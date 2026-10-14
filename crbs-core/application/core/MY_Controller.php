@@ -166,6 +166,11 @@ class MY_Controller extends CI_Controller
 		];
 
 		$this->data['css'][] = [
+			'media' => 'screen',
+			'path' => 'assets/css/ui.css',
+		];
+
+		$this->data['css'][] = [
 			'media' => 'print',
 			'path' => ENVIRONMENT === 'development'
 				? 'assets/css/print.css'

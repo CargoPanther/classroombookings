@@ -154,12 +154,7 @@ $total = array_sum($sizes);
 					<label>&nbsp;</label>
 
 					<?php
-					$img = img([
-						'src' => asset_url('assets/images/ui/disk.png'),
-						'hspace' => 6,
-						'border' => 0,
-						'alt' => lang('app.action.save'),
-					]);
+					$img = ui_icon('disk.png');
 					echo form_button([
 						'type' => 'submit',
 						'class' => 'btn-icon',
@@ -172,12 +167,7 @@ $total = array_sum($sizes);
 					if (!is_null($period)) {
 
 						$uri = site_url(sprintf('periods/delete/%d/%d', $schedule->schedule_id, $period->period_id));
-						$img = img([
-							'src' => asset_url('assets/images/ui/delete.png'),
-							'hspace' => 6,
-							'border' => 0,
-							'alt' => lang('app.action.edit'),
-						]);
+						$img = ui_icon('delete.png');
 						echo anchor($uri, $img, [
 							'title' => lang('app.action.delete'),
 							'hx-post' => $uri,
@@ -185,12 +175,7 @@ $total = array_sum($sizes);
 						]);
 
 						$uri = site_url(sprintf('periods/view/%d/%d', $schedule->schedule_id, $period->period_id));
-						$img = img([
-							'src' => asset_url('assets/images/ui/arrow_undo.png'),
-							'hspace' => 6,
-							'border' => 0,
-							'alt' => lang('app.action.cancel'),
-						]);
+						$img = ui_icon('arrow_undo.png');
 						echo anchor($uri, $img, [
 							'title' => lang('app.action.revert'),
 							'hx-get' => $uri,

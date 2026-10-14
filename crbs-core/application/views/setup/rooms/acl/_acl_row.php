@@ -15,13 +15,7 @@ $labels = [
 ];
 
 $type = $labels[$acl->context_type];
-$icon = img([
-	'src' => asset_url('assets/images/ui/'.$icons[$acl->context_type]),
-	'width' => 16,
-	'height' => 16,
-	'alt' => $type,
-	'style' => 'margin-right: 8px',
-]);
+$icon = ui_icon($icons[$acl->context_type], ['style' => 'margin-right:8px']);
 
 ?>
 
