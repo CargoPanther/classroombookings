@@ -14,9 +14,34 @@ class Login extends MY_Controller
 
 	function index()
 	{
+		if (setting('auth_microsoft_enabled', 'auth')
+			&& setting('auth_microsoft_auto_login', 'auth')) {
+			redirect('login/microsoft');
+		}
+
 		if ($this->input->post()) {
 			$this->handle_submit();
 		}
+
+		return $this->render_login_page(TRUE);
+	}
+
+
+	/**
+	 * Username/password-only fallback for deployments using automatic Microsoft sign-in.
+	 */
+	public function local()
+	{
+		if ($this->input->post()) {
+			$this->handle_submit();
+		}
+
+		return $this->render_login_page(FALSE);
+	}
+
+
+	private function render_login_page($show_microsoft)
+	{
 
 		$this->data['title'] = lang('auth.log_in');
 
@@ -25,7 +50,7 @@ class Login extends MY_Controller
 			$this->data['message'] = html_escape(setting('login_message_text'));
 		}
 
-		$this->data['microsoft_enabled'] = (bool) setting('auth_microsoft_enabled', 'auth');
+		$this->data['microsoft_enabled'] = $show_microsoft && (bool) setting('auth_microsoft_enabled', 'auth');
 
 		$columns = array(
 			'c1' => array(
@@ -76,7 +101,7 @@ class Login extends MY_Controller
 				unset($_SESSION['auth_microsoft_scope_debug']);
 			}
 			$this->session->set_flashdata('auth', msgbox('error', $message));
-			redirect('login');
+			redirect('login/local');
 		}
 
 		$code = $this->input->get('code');
@@ -89,7 +114,7 @@ class Login extends MY_Controller
 					$message .= ' ' . implode(' ', array_map('html_escape', $errors));
 				}
 				$this->session->set_flashdata('auth', msgbox('error', $message));
-				redirect('login');
+				redirect('login/local');
 			}
 			redirect($auth_url);
 		}
@@ -104,7 +129,7 @@ class Login extends MY_Controller
 				$message .= ' ' . implode(' ', array_map('html_escape', $errors));
 			}
 			$this->session->set_flashdata('auth', msgbox('error', $message));
-			redirect('login');
+			redirect('login/local');
 		}
 
 		$this->userauth->log_in_user($user, 'microsoft');

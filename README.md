@@ -14,6 +14,10 @@ It is web-based - PHP and MySQL - and currently uses the [CodeIgniter 3](https:/
 ## Documentation
 For installation instructions and configuration guide, please [read the documentation pages](https://www.classroombookings.com/docs/self-hosted/).
 
+## Additional changes
+- Added configurable Microsoft single sign-on, including optional automatic sign-in from the login page and a username/password-only fallback at `/login/local`.
+- Added an administrator-managed dashboard welcome message with per-user dismissal and a “Never show again” option. Updating the message resets saved “Never show again” choices.
+
 ## Bug Reports & Feature Requests
 Please check out [GitHub Issues](https://github.com/craigrodway/classroombookings/issues) to view existing issues or open a new bug report.
 

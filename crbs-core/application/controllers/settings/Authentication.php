@@ -110,6 +110,7 @@ class Authentication extends MY_Controller
 		}
 
 		$this->form_validation->set_rules('auth_microsoft_enabled', 'lang:auth.microsoft.field.enable', 'required|is_natural');
+		$this->form_validation->set_rules('auth_microsoft_auto_login', 'lang:auth.microsoft.field.auto_login', 'is_natural');
 		$this->form_validation->set_rules('auth_microsoft_client_id', 'lang:auth.microsoft.field.client_id', $opt_required.'max_length[255]');
 		$this->form_validation->set_rules('auth_microsoft_client_secret', 'lang:auth.microsoft.field.client_secret', $opt_required.'max_length[255]');
 		$this->form_validation->set_rules('auth_microsoft_redirect_uri', 'lang:auth.microsoft.field.redirect_uri', 'max_length[1024]|callback__valid_url_or_empty');
@@ -126,6 +127,7 @@ class Authentication extends MY_Controller
 
 		$fields = [
 			'auth_microsoft_enabled',
+			'auth_microsoft_auto_login',
 			'auth_microsoft_client_id',
 			'auth_microsoft_client_secret',
 			'auth_microsoft_redirect_uri',
@@ -143,6 +145,7 @@ class Authentication extends MY_Controller
 
 			switch ($field) {
 				case 'auth_microsoft_enabled':
+				case 'auth_microsoft_auto_login':
 				case 'auth_microsoft_create_users':
 				case 'auth_microsoft_default_role_id':
 				case 'auth_microsoft_default_department_id':

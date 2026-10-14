@@ -55,6 +55,29 @@ if (! empty($save_error)) {
 	</p>
 	<?php echo form_error($field) ?>
 
+	<?php
+	$field = 'auth_microsoft_auto_login';
+	$value = set_value($field, element($field, $settings, '0'), FALSE);
+	?>
+	<p>
+		<label for="<?= $field ?>"><?= lang('auth.microsoft.field.auto_login') ?></label>
+		<?php
+		echo form_hidden($field, '0');
+		echo form_checkbox(array(
+			'name' => $field,
+			'id' => $field,
+			'value' => '1',
+			'tabindex' => tab_index(),
+			'checked' => ($value == '1')
+		));
+		?>
+		<p class="hint">
+			<?= lang('auth.microsoft.field.auto_login_hint') ?>
+			<strong><?= html_escape(site_url('login/local')) ?></strong>
+		</p>
+	</p>
+	<?php echo form_error($field) ?>
+
 </fieldset>
 
 <fieldset>
