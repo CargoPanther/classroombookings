@@ -10,63 +10,50 @@ if ($room_count === 0) {
 
 $this->load->library('table');
 $this->table->set_template([
-	'table_open' => '<table class="border-table" width="100%" cellpadding="4" cellspacing="2" border="0">',
+	'table_open' => '<table class="border-table" style="width:100%;table-layout:fixed" cellpadding="4" cellspacing="2" border="0">',
+	'heading_row_start' => '<tr class="heading">',
 ]);
 
 $this->table->set_heading([
-	lang('room.field.name'),
-	lang('room_group.group'),
-	lang('room.field.location'),
-	lang('room.field.user_id'),
-	lang('app.actions'),
+	['data' => lang('room.field.name'), 'width' => '30%'],
+	['data' => lang('room_group.group'), 'width' => '20%'],
+	['data' => lang('room.field.location'), 'width' => '25%'],
+	['data' => lang('room.field.user_id'), 'width' => '25%'],
 ]);
 
 foreach ($rooms as $room) {
 	$name = html_escape($room->name);
+	$info_icon = img(asset_url('assets/images/ui/info.png'), FALSE, [
+		'alt' => '',
+		'aria-hidden' => 'true',
+		'style' => 'margin-right:5px;vertical-align:middle',
+	]);
 	$info_url = site_url('rooms/info/' . $room->room_id);
-	$name_html = anchor($info_url, $name, [
+	$link_attributes = [
+		'class' => 'room-directory-link',
+		'style' => 'display:block;min-height:1.5em;color:inherit;text-decoration:none;cursor:pointer',
+		'title' => lang('app.action.view'),
 		'up-layer' => 'new drawer',
 		'up-position' => 'left',
 		'up-target' => '.room-info',
 		'up-preload' => '',
-	]);
+	];
 
-	$group_html = !empty($room->group->name) ? html_escape($room->group->name) : '';
-	$location_html = html_escape($room->location);
+	$group_html = !empty($room->group->name) ? html_escape($room->group->name) : ' ';
+	$location_html = html_escape($room->location) ?: ' ';
 
 	$owner_html = '';
 	if (!empty($room->user_id)) {
 		$owner = $room->owner->displayname ?? '';
 		$owner_html = html_escape($owner ?: ($room->owner->username ?? ''));
 	}
-
-	$actions_html = iconbar([
-		[
-			'link' => $info_url,
-			'name' => '',
-			'title' => lang('app.action.view'),
-			'icon' => 'info.png',
-			'attrs' => [
-				'up-layer' => 'new drawer',
-				'up-position' => 'left',
-				'up-target' => '.room-info',
-				'up-preload' => '',
-			],
-		],
-		[
-			'link' => 'bookings/create/single?room_id=' . $room->room_id,
-			'name' => '',
-			'title' => lang('booking.book'),
-			'icon' => 'school_manage_bookings.png',
-		],
-	]);
+	$owner_html = $owner_html ?: ' ';
 
 	$this->table->add_row([
-		$name_html,
-		$group_html,
-		$location_html,
-		$owner_html,
-		$actions_html,
+		anchor($info_url, $info_icon . $name, $link_attributes),
+		anchor($info_url, $group_html, $link_attributes),
+		anchor($info_url, $location_html, $link_attributes),
+		anchor($info_url, $owner_html, $link_attributes),
 	]);
 }
 
