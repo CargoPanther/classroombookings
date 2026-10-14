@@ -1,6 +1,8 @@
 <?php
 
 $lang['room.rooms'] = 'Rooms';
+$lang['room.directory'] = 'Rooms & Resources';
+$lang['room.directory.no_items'] = 'No bookable rooms or resources are currently available to you.';
 $lang['room.room'] = 'Room';
 $lang['room.add.action'] = 'Create room';
 $lang['room.add.title'] = '%s group: Create room';

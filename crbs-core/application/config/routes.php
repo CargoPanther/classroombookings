@@ -56,5 +56,7 @@ $route['translate_uri_dashes'] = FALSE;
 $route['controlpanel'] = 'dashboard';
 $route['changelog'] = 'dashboard/changelog';
 $route['changelog/status'] = 'dashboard/changelog_status';
+$route['rooms-and-resources'] = 'rooms/index';
+$route['rooms-and-resources/(.+)'] = 'rooms/$1';
 
 $route['setup/rooms'] = 'setup/rooms/dashboard';

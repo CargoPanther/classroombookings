@@ -22,6 +22,12 @@ class Menu_model extends CI_Model
 			'icon' => 'calendar.png',
 		];
 
+		$items[] = [
+			'label' => lang('room.directory'),
+			'url' => site_url('rooms-and-resources'),
+			'icon' => 'school_manage_rooms.png',
+		];
+
 		if (has_setup_permission()) {
 			$items[] = [
 				'label' => lang('setup.setup'),

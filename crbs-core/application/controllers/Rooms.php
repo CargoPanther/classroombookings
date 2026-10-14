@@ -21,6 +21,22 @@ class Rooms extends MY_Controller
 	}
 
 
+	public function index()
+	{
+		$user_id = $this->userauth->user->user_id ?? NULL;
+		if (empty($user_id)) {
+			show_404();
+		}
+
+		$this->data['rooms'] = $this->rooms_model->get_bookable_rooms(['user_id' => $user_id]);
+		$this->data['title'] = lang('room.directory');
+		$this->data['showtitle'] = $this->data['title'];
+		$this->data['body'] = $this->load->view('rooms/index', $this->data, TRUE);
+
+		return $this->render();
+	}
+
+
 
 	function info($room_id)
 	{
