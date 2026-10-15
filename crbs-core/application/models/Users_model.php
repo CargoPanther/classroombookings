@@ -80,6 +80,39 @@ class Users_model extends CI_Model
 		return FALSE;
 	}
 
+	public function get_by_email($email, $require_enabled = TRUE)
+	{
+		if (empty($email)) {
+			return FALSE;
+		}
+
+		$where = ['email' => $email];
+		if ($require_enabled) {
+			$where['enabled'] = 1;
+		}
+
+		$query = $this->db->get_where($this->table, $where, 1);
+		return $query->num_rows() === 1 ? $query->row() : FALSE;
+	}
+
+	public function get_by_microsoft_id(string $microsoft_id)
+	{
+		$query = $this->db->get_where($this->table, [
+			'microsoft_id' => $microsoft_id,
+			'enabled' => 1,
+		], 1);
+		return $query->num_rows() === 1 ? $query->row() : FALSE;
+	}
+
+	public function microsoft_id_in_use(string $microsoft_id, ?int $except_user_id = null): bool
+	{
+		$this->db->from($this->table)->where('microsoft_id', $microsoft_id);
+		if ($except_user_id !== null) {
+			$this->db->where('user_id !=', $except_user_id);
+		}
+		return $this->db->count_all_results() > 0;
+	}
+
 
 	/**
 	 * Get an active/enabled user by the given ID.
@@ -266,6 +299,7 @@ class Users_model extends CI_Model
 			'lastlogin',
 			'created',
 			'force_password_reset',
+			'microsoft_id',
 			// 'max_active_bookings_value',
 		];
 

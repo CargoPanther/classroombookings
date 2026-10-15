@@ -32,6 +32,7 @@ class Userauth
 			require_once(APPPATH.'permissions/BookingPermissions.php');
 			$this->CI->permission->define_rules_from_class_methods(\app\permissions\SystemPermissions::class);
 			$this->CI->permission->define_rules_from_class_methods(\app\permissions\BookingPermissions::class);
+			$this->CI->permission->define_rules_from_class_methods(\app\permissions\RoomPermissions::class);
 			$this->init_user();
 		}
 	}
@@ -185,6 +186,8 @@ class Userauth
 	 */
 	private function setup_session($user_id, $auth_method = 'local')
 	{
+		$this->CI->session->sess_regenerate(TRUE);
+
 		// Set up session
 		$_SESSION['loggedin'] = true;
 		$_SESSION['user_id'] = $user_id;

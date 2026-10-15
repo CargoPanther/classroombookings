@@ -249,7 +249,7 @@ $fields_html = '';
 $this->table->clear();
 
 foreach ($booking->room->info as $row) {
-	$this->table->add_row($row['label'], $row['value']);
+	$this->table->add_row(html_escape($row['label']), $row['value']);
 }
 
 $fields_html = $this->table->generate();

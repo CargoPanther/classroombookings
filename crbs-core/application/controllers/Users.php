@@ -223,6 +223,9 @@ class Users extends MY_Controller
 		$this->form_validation->set_rules('username', 'lang:user.field.username', 'required|max_length[32]|regex_match[/^[A-Za-z0-9-_.@]+$/]');
 		$this->form_validation->set_rules('enabled', 'lang:user.field.enabled', 'required|integer');
 		$this->form_validation->set_rules('email', 'lang:user.field.email', 'valid_email|max_length[255]');
+		if (!is_null($user_id)) {
+			$this->form_validation->set_rules('microsoft_id', 'lang:user.field.microsoft_id', "max_length[36]|callback__valid_microsoft_id[{$user_id}]");
+		}
 		$this->form_validation->set_rules('force_password_reset', 'lang:user.field.force_password_reset', 'in_list[0,1]');
 
 		$use_ldap = (setting('ldap_enabled', 'auth') == '1');
@@ -273,6 +276,10 @@ class Users extends MY_Controller
 			'force_password_reset' => $this->input->post('force_password_reset'),
 		);
 
+		if (!is_null($user_id)) {
+			$user_data['microsoft_id'] = strtolower(trim((string) $this->input->post('microsoft_id')));
+		}
+
 		if ($this->input->post('password1') && $this->input->post('password2')) {
 			$user_data['password'] = password_hash((string) $this->input->post('password1'), PASSWORD_DEFAULT);
 		}
@@ -305,6 +312,24 @@ class Users extends MY_Controller
 
 		$this->session->set_flashdata('saved', $flashmsg);
 		redirect('users/edit/'.$user_id);
+	}
+
+	public function _valid_microsoft_id($value, $user_id): bool
+	{
+		$value = trim((string) $value);
+		if ($value === '') return TRUE;
+
+		if (!preg_match('/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i', $value)) {
+			$this->form_validation->set_message('_valid_microsoft_id', lang('user.field.microsoft_id_invalid'));
+			return FALSE;
+		}
+
+		if ($this->users_model->microsoft_id_in_use($value, (int) $user_id)) {
+			$this->form_validation->set_message('_valid_microsoft_id', lang('user.field.microsoft_id_in_use'));
+			return FALSE;
+		}
+
+		return TRUE;
 	}
 
 

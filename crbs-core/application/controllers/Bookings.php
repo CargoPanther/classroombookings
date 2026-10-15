@@ -123,6 +123,9 @@ class Bookings extends MY_Controller
 		];
 
 		$booking = $this->bookings_model->include($include)->get($booking_id);
+		if ($booking && !has_permission(Permission::ROOM_VIEW, (int) $booking->room_id)) {
+			show_404();
+		}
 
 		$this->data['booking'] = $booking;
 		$this->data['current_user'] = $this->userauth->user;
@@ -174,6 +177,9 @@ class Bookings extends MY_Controller
 		];
 
 		$booking = $this->bookings_model->include($include)->get($booking_id);
+		if ($booking && !has_permission(Permission::ROOM_VIEW, (int) $booking->room_id)) {
+			show_404();
+		}
 
 		$this->data['booking'] = $booking;
 		$this->data['current_user'] = $this->userauth->user;
@@ -204,6 +210,9 @@ class Bookings extends MY_Controller
 		// Get booking to highlight it in the list
 		$include = [ 'period' ];
 		$booking = $this->bookings_model->include($include)->get($booking_id);
+		if ($booking && !has_permission(Permission::ROOM_VIEW, (int) $booking->room_id)) {
+			show_404();
+		}
 
 		$this->data['booking'] = $booking;
 

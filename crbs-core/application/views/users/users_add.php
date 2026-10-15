@@ -89,6 +89,30 @@ echo form_open(current_url(), array('class' => 'cssform', 'id' => 'users_add'), 
 </fieldset>
 
 
+<?php if (isset($user)): ?>
+<fieldset>
+	<legend><?= lang('user.microsoft_identity') ?></legend>
+	<p>
+		<label for="microsoft_id"><?= lang('user.field.microsoft_id') ?></label>
+		<?php
+		$field = 'microsoft_id';
+		$value = set_value($field, $user->microsoft_id ?? '', FALSE);
+		echo form_input([
+			'name' => $field,
+			'id' => $field,
+			'size' => '40',
+			'maxlength' => '36',
+			'tabindex' => tab_index(),
+			'value' => $value,
+		]);
+		?>
+		<p class="hint"><?= lang('user.field.microsoft_id_hint') ?></p>
+	</p>
+	<?php echo form_error($field); ?>
+</fieldset>
+<?php endif; ?>
+
+
 <fieldset>
 
 	<legend accesskey="C" tabindex="<?php echo tab_index() ?>"><?= lang('constraint.constraints') ?></legend>

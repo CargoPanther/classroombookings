@@ -23,6 +23,11 @@ $lang['user.field.firstname'] = 'First name';
 $lang['user.field.lastname'] = 'Last name';
 $lang['user.field.displayname'] = 'Display name';
 $lang['user.field.email'] = 'Email address';
+$lang['user.microsoft_identity'] = 'Microsoft sign-in linking';
+$lang['user.field.microsoft_id'] = 'Microsoft Object ID';
+$lang['user.field.microsoft_id_hint'] = 'To link this existing account to Microsoft sign-in, enter its Object ID from the configured Entra tenant. Do not enter an email address or username. Leave blank to keep the account unlinked.';
+$lang['user.field.microsoft_id_invalid'] = 'Enter a valid Microsoft Object ID GUID.';
+$lang['user.field.microsoft_id_in_use'] = 'This Microsoft Object ID is already linked to another user.';
 $lang['user.field.ext'] = 'Phone extension';
 
 $lang['user.user_details'] = 'User details';

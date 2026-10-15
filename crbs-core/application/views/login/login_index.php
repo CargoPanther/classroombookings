@@ -7,7 +7,6 @@ echo form_open(current_url(), array('id' => 'login', 'class' => 'cssform login-f
 		<div class="login-notice"><?= nl2br((string) $message) ?></div>
 	<?php endif; ?>
 	<?= $error ?? '' ?>
-	<?= validation_errors() ?>
 
 	<fieldset class="login-fieldset">
 		<legend accesskey="L" tabindex="<?= tab_index() ?>"><?= lang('auth.log_in') ?></legend>

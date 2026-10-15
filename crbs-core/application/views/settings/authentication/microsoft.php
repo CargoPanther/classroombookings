@@ -146,10 +146,10 @@ if (! empty($save_error)) {
 
 	<?php
 	$field = 'auth_microsoft_authority';
-	$value = set_value($field, element($field, $settings, 'common'), FALSE);
+	$value = set_value($field, element($field, $settings, ''), FALSE);
 	?>
 	<p>
-		<label for="<?= $field ?>"><?= lang('auth.microsoft.field.authority') ?></label>
+		<label for="<?= $field ?>"><?= lang('auth.microsoft.field.tenant_id') ?></label>
 		<?php
 		echo form_input(array(
 			'name' => $field,
@@ -160,7 +160,7 @@ if (! empty($save_error)) {
 			'value' => $value,
 		));
 		?>
-		<p class="hint"><?= lang('auth.microsoft.field.authority_hint') ?></p>
+		<p class="hint"><?= lang('auth.microsoft.field.tenant_id_hint') ?></p>
 	</p>
 	<?php echo form_error($field) ?>
 

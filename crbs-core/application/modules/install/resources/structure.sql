@@ -343,7 +343,9 @@ CREATE TABLE `users` (
   `enabled` tinyint unsigned NOT NULL DEFAULT '1',
   `created` datetime DEFAULT NULL,
   `force_password_reset` tinyint unsigned NOT NULL DEFAULT '0',
+  `microsoft_id` varchar(36) DEFAULT NULL,
   PRIMARY KEY (`user_id`),
+  UNIQUE KEY `microsoft_id` (`microsoft_id`),
   KEY `enabled` (`enabled`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

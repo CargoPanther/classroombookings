@@ -114,8 +114,8 @@ class Authentication extends MY_Controller
 		$this->form_validation->set_rules('auth_microsoft_client_id', 'lang:auth.microsoft.field.client_id', $opt_required.'max_length[255]');
 		$this->form_validation->set_rules('auth_microsoft_client_secret', 'lang:auth.microsoft.field.client_secret', $opt_required.'max_length[255]');
 		$this->form_validation->set_rules('auth_microsoft_redirect_uri', 'lang:auth.microsoft.field.redirect_uri', 'max_length[1024]|callback__valid_url_or_empty');
-		$this->form_validation->set_rules('auth_microsoft_authority', 'lang:auth.microsoft.field.authority', $opt_required.'max_length[255]');
-		$this->form_validation->set_rules('auth_microsoft_scopes', 'lang:auth.microsoft.field.scopes', 'max_length[255]');
+		$this->form_validation->set_rules('auth_microsoft_authority', 'lang:auth.microsoft.field.authority', $opt_required.'max_length[36]|callback__valid_microsoft_tenant_id');
+		$this->form_validation->set_rules('auth_microsoft_scopes', 'lang:auth.microsoft.field.scopes', 'max_length[255]|callback__valid_microsoft_scopes');
 		$this->form_validation->set_rules('auth_microsoft_create_users', 'lang:auth.microsoft.field.create_users', 'is_natural');
 		$this->form_validation->set_rules('auth_microsoft_default_role_id', 'lang:role.role', 'callback__valid_natural_no_zero_or_empty');
 		$this->form_validation->set_rules('auth_microsoft_default_department_id', 'lang:department.department', 'callback__valid_natural_no_zero_or_empty');
@@ -182,6 +182,31 @@ class Authentication extends MY_Controller
 		}
 
 		$this->form_validation->set_message('_valid_url_or_empty', lang('auth.microsoft.redirect_uri_invalid'));
+		return FALSE;
+	}
+
+	public function _valid_microsoft_tenant_id($value)
+	{
+		if ($value === '' || $value === null) {
+			return $this->input->post('auth_microsoft_enabled') != 1;
+		}
+
+		if (preg_match('/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i', $value)) {
+			return TRUE;
+		}
+
+		$this->form_validation->set_message('_valid_microsoft_tenant_id', lang('auth.microsoft.field.tenant_id_invalid'));
+		return FALSE;
+	}
+
+	public function _valid_microsoft_scopes($value)
+	{
+		$scopes = preg_split('/\s+/', trim((string) $value), -1, PREG_SPLIT_NO_EMPTY);
+		if (in_array('User.Read', $scopes, TRUE)) {
+			return TRUE;
+		}
+
+		$this->form_validation->set_message('_valid_microsoft_scopes', lang('auth.microsoft.field.scopes_invalid'));
 		return FALSE;
 	}
 

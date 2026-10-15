@@ -33,6 +33,10 @@ if ($is_setup_page && has_setup_permission()) {
 <meta name="author" content="Craig A Rodway">
 <meta name="robots" content="noindex,nofollow">
 <title><?= html_escape($title) ?> | classroombookings</title>
+<?php if (config_item('csrf_protection')): ?>
+<meta name="csrf-token-name" content="<?= html_escape($this->security->get_csrf_token_name()) ?>">
+<meta name="csrf-token" content="<?= html_escape($this->security->get_csrf_hash()) ?>">
+<?php endif; ?>
 <script>
 (function() {
 	var theme = null;
@@ -151,13 +155,19 @@ var BASE_URL = "<?= base_url() ?>";
 				<div class="block b-60 header-meta">
 					<?php
 					if ( ! empty($global_menu)) {
-						echo "<p class='iconbar'>";
+						echo "<div class='iconbar'>";
 						foreach ($global_menu as $idx => $item) {
 							$icon = ui_icon($item['icon']);
 							$label = $icon . html_escape($item['label']);
-							echo anchor($item['url'], $label);
+							if (trim((string) parse_url($item['url'], PHP_URL_PATH), '/') === 'index.php/logout' || trim((string) $item['url'], '/') === 'logout') {
+								echo form_open('logout', ['class' => 'header-logout-form']);
+								echo form_button(['type' => 'submit', 'class' => 'header-logout-button', 'content' => $label]);
+								echo form_close();
+							} else {
+								echo anchor($item['url'], $label);
+							}
 						}
-						echo "</p>";
+						echo "</div>";
 					}
 					?>
 				</div>

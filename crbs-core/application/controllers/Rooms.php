@@ -83,6 +83,9 @@ class Rooms extends MY_Controller
 		if (empty($room)) {
 			show_404();
 		}
+		if (!has_permission(Permission::ROOM_VIEW, (int) $room->room_id)) {
+			show_404();
+		}
 
 		return $room;
 	}

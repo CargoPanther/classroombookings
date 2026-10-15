@@ -13,7 +13,7 @@ class Auth_microsoft
 	protected $client_id = '';
 	protected $client_secret = '';
 	protected $redirect_uri = '';
-	protected $authority = 'common';
+	protected $authority = '';
 	protected $scopes = 'User.Read';
 	protected $create_users = false;
 	protected $default_role_id = null;
@@ -55,7 +55,7 @@ class Auth_microsoft
 		$this->client_id = element('auth_microsoft_client_id', $settings, '');
 		$this->client_secret = element('auth_microsoft_client_secret', $settings, '');
 		$this->redirect_uri = element('auth_microsoft_redirect_uri', $settings, site_url('login/microsoft'));
-		$this->authority = element('auth_microsoft_authority', $settings, 'common');
+		$this->authority = element('auth_microsoft_authority', $settings, '');
 		$this->scopes = element('auth_microsoft_scopes', $settings, 'User.Read');
 		$this->create_users = boolval(element('auth_microsoft_create_users', $settings, 0));
 		$this->default_role_id = element('auth_microsoft_default_role_id', $settings, null);
@@ -81,7 +81,7 @@ class Auth_microsoft
 			'redirectUri' => $this->redirect_uri,
 			'urlAuthorize' => $endpoints['authorization_endpoint'],
 			'urlAccessToken' => $endpoints['token_endpoint'],
-			'urlResourceOwnerDetails' => $endpoints['userinfo_endpoint'],
+			'urlResourceOwnerDetails' => 'https://graph.microsoft.com/v1.0/me',
 			'scopes' => explode(' ', $this->scopes),
 		]);
 
@@ -90,7 +90,12 @@ class Auth_microsoft
 
 	protected function discover_endpoints()
 	{
-		$authority = trim($this->authority) ?: 'common';
+		$authority = trim($this->authority);
+		if (!preg_match('/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i', $authority)) {
+			$this->errors[] = 'invalid_tenant';
+			return FALSE;
+		}
+		$authority = strtolower($authority);
 		$discovery_url = sprintf('https://login.microsoftonline.com/%s/v2.0/.well-known/openid-configuration', rawurlencode($authority));
 
 		$context = stream_context_create([
@@ -113,10 +118,32 @@ class Auth_microsoft
 			return FALSE;
 		}
 
-		$required = ['authorization_endpoint', 'token_endpoint', 'userinfo_endpoint'];
+		$required = ['authorization_endpoint', 'token_endpoint'];
 		foreach ($required as $key) {
 			if (empty($payload[$key])) {
 				$this->errors[] = 'discovery_missing_' . $key;
+				return FALSE;
+			}
+		}
+
+		$expected_issuer = 'https://login.microsoftonline.com/' . $authority . '/v2.0';
+		$issuer = strtolower((string) ($payload['issuer'] ?? ''));
+		if ($issuer !== $expected_issuer && $issuer !== 'https://login.microsoftonline.com/{tenantid}/v2.0') {
+			$this->errors[] = 'tenant_mismatch';
+			return FALSE;
+		}
+		foreach (['authorization_endpoint', 'token_endpoint'] as $endpoint) {
+			$url = parse_url($payload[$endpoint]);
+			$allowed_hosts = ['login.microsoftonline.com'];
+			if (($url['scheme'] ?? '') !== 'https' || !in_array(strtolower($url['host'] ?? ''), $allowed_hosts, TRUE)) {
+				$this->errors[] = 'tenant_mismatch';
+				return FALSE;
+			}
+			$path = strtolower($url['path'] ?? '');
+			if (str_starts_with($path, '/{tenant}/')) {
+				$payload[$endpoint] = str_replace('{tenant}', $authority, $payload[$endpoint]);
+			} elseif (!str_starts_with($path, '/' . $authority . '/')) {
+				$this->errors[] = 'tenant_mismatch';
 				return FALSE;
 			}
 		}
@@ -206,11 +233,17 @@ class Auth_microsoft
 
 	protected function find_or_create_user(array $claims)
 	{
-		$email = element('email', $claims) ?: element('preferred_username', $claims);
-		$upn = element('upn', $claims);
-		$givenName = element('given_name', $claims);
-		$familyName = element('family_name', $claims);
-		$name = element('name', $claims);
+		$microsoft_id = trim((string) element('id', $claims));
+		if ($microsoft_id === '') {
+			$this->errors[] = 'missing_identity';
+			return FALSE;
+		}
+
+		$email = element('mail', $claims) ?: element('email', $claims) ?: element('preferred_username', $claims) ?: element('userPrincipalName', $claims);
+		$upn = element('upn', $claims) ?: element('userPrincipalName', $claims);
+		$givenName = element('given_name', $claims) ?: element('givenName', $claims);
+		$familyName = element('family_name', $claims) ?: element('surname', $claims);
+		$name = element('name', $claims) ?: element('displayName', $claims);
 
 		if (empty($email) && empty($upn)) {
 			$this->errors[] = 'missing_email';
@@ -218,10 +251,12 @@ class Auth_microsoft
 		}
 
 		$username = $email ?: $upn;
-
-		$user = $this->CI->users_model->get_by_email($email, FALSE);
+		$user = $this->CI->users_model->get_by_microsoft_id($microsoft_id);
 		if (!$user) {
-			$user = $this->CI->users_model->get_by_username($username, FALSE);
+			$user = $this->CI->users_model->get_by_email($email, FALSE);
+			if (!$user) {
+				$user = $this->CI->users_model->get_by_username($username, FALSE);
+			}
 		}
 
 		$user_data = [
@@ -237,7 +272,20 @@ class Auth_microsoft
 				$this->errors[] = 'user_not_enabled';
 				return FALSE;
 			}
+			if (empty($user->microsoft_id)) {
+				$this->errors[] = 'identity_not_linked';
+				return FALSE;
+			}
+			if (!hash_equals(strtolower($user->microsoft_id), strtolower($microsoft_id))) {
+				$this->errors[] = 'identity_mismatch';
+				return FALSE;
+			}
 
+			$user_data = [
+				'firstname' => $givenName,
+				'lastname' => $familyName,
+				'displayname' => $name ?: trim($givenName . ' ' . $familyName),
+			];
 			$this->CI->users_model->update($user->user_id, $user_data);
 			return $this->CI->users_model->get_by_id($user->user_id);
 		}
@@ -248,6 +296,7 @@ class Auth_microsoft
 		}
 
 		$user_id = $this->CI->users_model->insert(array_merge($user_data, [
+			'microsoft_id' => $microsoft_id,
 			'created' => date('Y-m-d H:i:s'),
 			'enabled' => 1,
 			'role_id' => $this->default_role_id,

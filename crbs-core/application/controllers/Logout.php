@@ -14,6 +14,10 @@ class Logout extends MY_Controller
 
 	function index()
 	{
+		if ($this->input->method(TRUE) !== 'POST') {
+			show_404();
+		}
+
 		$this->userauth->log_out();
 		redirect('');
 	}

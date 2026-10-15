@@ -159,6 +159,10 @@ class Login extends MY_Controller
 
 		// Run validation
 		if ($this->form_validation->run() == FALSE) {
+			$errors = $this->form_validation->error_array();
+			$this->data['error'] = '<div class="action-notification-source" hidden>'
+				. msgbox('error', implode(' ', $errors))
+				. '</div>';
 			return false;
 		}
 

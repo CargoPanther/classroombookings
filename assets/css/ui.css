@@ -87,6 +87,31 @@ body {
   color: var(--ui-primary-dark) !important;
 }
 
+.header-logout-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.header-meta .header-logout-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ui-text);
+  background: transparent;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.header-meta .header-logout-button:hover,
+.header-meta .header-logout-button:focus-visible {
+  background: var(--ui-primary-soft);
+  color: var(--ui-primary-dark);
+}
+
 .content_area {
   margin-top: 24px;
   max-width: 100%;
@@ -1496,6 +1521,22 @@ table td > a[title="Delete"]:focus-visible {
 [data-theme="dark"] div.msgbox.error {
   border-color: var(--ui-error-border);
   background-color: var(--ui-error-bg);
+  color: var(--ui-error-text);
+}
+
+[data-theme="dark"] p.hint.error,
+[data-theme="dark"] p.error {
+  border-color: var(--ui-error-border);
+  border-radius: 6px;
+  background: var(--ui-error-bg);
+  color: var(--ui-error-text);
+}
+
+[data-theme="dark"] p.error span,
+[data-theme="dark"] p.hint span.error,
+[data-theme="dark"] span.error {
+  border-color: var(--ui-error-border);
+  background: var(--ui-error-bg);
   color: var(--ui-error-text);
 }
 

@@ -1,5 +1,21 @@
 # classroombookings Changelog
 
+## [2.17.2b] 2026-10-15
+
+### Added
+- Authentication: Microsoft Entra ID single sign-on, with optional automatic sign-in, user provisioning and a local-login fallback.
+- Dashboard: Configurable welcome message with per-user dismissal and a “Never show again” option.
+- Rooms & Resources: Directory for browsing rooms and viewing room details.
+- Bookings: Room capacity and shared-slot bookings, including single, recurring and multi-booking workflows.
+
+### Updated
+- Bookings: Improved booking forms, capacity and remaining-capacity information, and validation notifications.
+- Interface: Refreshed the UI, improved resource-list interactions and added a dark/light theme toggle.
+
+### Security
+- Escape user display names in navigation to prevent potential cross-site scripting.
+
+
 ## [2.15.0] 2025-04-20
 
 ### Added

@@ -1,4 +1,6 @@
 (function() {
+	var csrfTokenName = document.querySelector('meta[name="csrf-token-name"]');
+	var csrfToken = document.querySelector('meta[name="csrf-token"]');
 	var storageKey = 'crbs-theme';
 	var media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 	var hasStoredPreference = false;
@@ -234,6 +236,9 @@ up.compiler('.dashboard-welcome-message', function(messageEl) {
 		fetch(hideUrl, {
 			method: 'POST',
 			credentials: 'same-origin',
+			body: new URLSearchParams(csrfTokenName && csrfToken ? {
+				[csrfTokenName.content]: csrfToken.content
+			} : {}),
 			headers: {
 				'X-Requested-With': 'XMLHttpRequest'
 			}
