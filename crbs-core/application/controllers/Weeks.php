@@ -36,8 +36,7 @@ class Weeks extends MY_Controller
 
 		$body = $this->load->view('weeks/index', $this->data, TRUE);
 
-		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'weeks'], TRUE);
-		$this->data['body'] = $section_nav . $body;
+		$this->data['body'] = $body;
 
 		return $this->render();
 	}
@@ -61,8 +60,7 @@ class Weeks extends MY_Controller
 			'c1' => ['content' => $add, 'width' => '70%'],
 		];
 		$body = $this->load->view('columns', $columns, TRUE);
-		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'weeks'], TRUE);
-		$this->data['body'] = $section_nav . $body;
+		$this->data['body'] = $body;
 
 		return $this->render();
 	}
@@ -89,8 +87,7 @@ class Weeks extends MY_Controller
 			'c1' => ['content' => $add, 'width' => '70%'],
 		];
 		$body = $this->load->view('columns', $columns, TRUE);
-		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'weeks'], TRUE);
-		$this->data['body'] = $section_nav . $body;
+		$this->data['body'] = $body;
 
 		return $this->render();
 	}
@@ -181,8 +178,7 @@ class Weeks extends MY_Controller
 		$title = "<h2>{$this->data['title']}</h2>";
 		$body = $this->load->view('partials/deleteconfirm', $this->data, TRUE);
 
-		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'weeks'], TRUE);
-		$this->data['body'] = $section_nav . $title . $body;
+		$this->data['body'] = $title . $body;
 
 		return $this->render();
 	}

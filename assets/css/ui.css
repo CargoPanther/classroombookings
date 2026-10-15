@@ -493,6 +493,37 @@ div.msgbox.notice {
   box-shadow: var(--ui-shadow);
 }
 
+.toastify {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: min(420px, calc(100vw - 30px));
+  border-radius: 8px;
+  cursor: default;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.toastify-warning {
+  background: #996b00;
+}
+
+.toast-close {
+  flex: 0 0 auto;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 6px;
+  opacity: 1;
+}
+
+.toast-close:hover,
+.toast-close:focus-visible {
+  background: rgba(255, 255, 255, 0.18);
+  outline: 2px solid #fff;
+}
+
 .dashboard-welcome-message {
   margin-bottom: 20px;
 }
@@ -652,6 +683,53 @@ div.msgbox.notice {
   min-width: 0;
   margin: 0;
   overflow-wrap: anywhere;
+}
+
+.booking-shared-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.booking-create-single .booking-shared-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+.booking-create-single .booking-shared-table th,
+.booking-create-single .booking-shared-table td {
+  padding: 8px 10px;
+  border-top: 1px solid var(--ui-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.booking-create-single .booking-shared-table th {
+  color: var(--ui-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.booking-create-single .booking-shared-table th:first-child,
+.booking-create-single .booking-shared-table td:first-child {
+  padding-left: 4px;
+}
+
+.booking-create-single .booking-shared-table .iconbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+
+.booking-create-single .booking-shared-table .iconbar > a {
+  margin: 0;
+  padding: 5px 8px;
+}
+
+.booking-shared-no-actions {
+  color: var(--ui-muted);
 }
 
 .booking-create-single .booking-room-details .booking-detail-list {

@@ -232,6 +232,7 @@ function doToast(type, text, time) {
 	var classes = {
 		'success': 'toastify-success',
 		'error': 'toastify-error',
+		'warning': 'toastify-warning',
 		'info': 'toastify-info',
 	};
 	var className = classes[type] ? classes[type] : 'toastify-info';
@@ -240,14 +241,40 @@ function doToast(type, text, time) {
 
 	Toastify({
 		text: text,
-		duration: time ? time : 10000,
+		duration: time === undefined || time === null ? 30000 : time,
 		className: className,
 		close: true,
-		gravity: "top", // `top` or `bottom`
-		position: "center", // `left`, `center` or `right`
-		stopOnFocus: true, // Prevents dismissing of toast on hover
+		gravity: "bottom",
+		position: "right",
+		stopOnFocus: false,
 	}).showToast();
 }
+
+
+up.compiler('.action-notification-source', function(source) {
+	var boxes = source.querySelectorAll('.msgbox');
+	if (!boxes.length) {
+		var plainText = (source.innerText || source.textContent || '').trim();
+		if (plainText) doToast('info', plainText, 30000);
+		source.remove();
+		return;
+	}
+
+	Array.prototype.forEach.call(boxes, function(box) {
+		var classes = Array.prototype.slice.call(box.classList);
+		var type = 'info';
+		if (classes.indexOf('error') !== -1) {
+			type = 'error';
+		} else if (classes.indexOf('exclamation') !== -1 || classes.indexOf('notice') !== -1 || classes.indexOf('warning') !== -1) {
+			type = 'warning';
+		}
+		var content = box.querySelector('.msgbox-content') || box;
+		var text = (content.innerText || content.textContent || '').trim();
+		if (text) doToast(type, text, 30000);
+	});
+
+	source.remove();
+});
 
 //
 

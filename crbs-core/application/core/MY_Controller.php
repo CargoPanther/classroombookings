@@ -85,13 +85,29 @@ class MY_Controller extends CI_Controller
 
 	protected function render($view_name = 'layout')
 	{
+		$this->prepare_action_notifications();
 		$this->load->view($view_name, $this->data);
 	}
 
 
 	protected function render_up()
 	{
+		$this->prepare_action_notifications();
 		$this->load->view('unpoly', $this->data);
+	}
+
+
+	private function prepare_action_notifications()
+	{
+		if (empty($this->data['body']) || !is_string($this->data['body'])) return;
+
+		foreach (['saved', 'bookings', 'auth'] as $key) {
+			$flash = $this->session->flashdata($key);
+			if (!is_string($flash) || trim($flash) === '' || strpos($this->data['body'], $flash) === FALSE) continue;
+
+			$source = '<div class="action-notification-source" hidden>' . $flash . '</div>';
+			$this->data['body'] = str_replace($flash, $source, $this->data['body']);
+		}
 	}
 
 

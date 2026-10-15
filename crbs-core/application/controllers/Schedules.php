@@ -30,10 +30,9 @@ class Schedules extends MY_Controller
 		$this->data['schedules'] = $this->schedules_model->get_all();
 		$this->data['title'] = lang('schedule.schedules');
 
-		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'schedules'], TRUE);
 		$body = $this->load->view('schedules/index', $this->data, TRUE);
 
-		$this->data['body'] = $section_nav . $body;
+		$this->data['body'] = $body;
 
 		return $this->render();
 	}
@@ -48,10 +47,9 @@ class Schedules extends MY_Controller
 			$this->save();
 		}
 
-		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'schedules'], TRUE);
 		$body = $this->load->view('schedules/add', $this->data, TRUE);
 
-		$this->data['body'] = $section_nav . $body;
+		$this->data['body'] = $body;
 
 		return $this->render();
 	}
@@ -68,10 +66,9 @@ class Schedules extends MY_Controller
 			$this->save($schedule_id);
 		}
 
-		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'schedules'], TRUE);
 		$body = $this->load->view('schedules/add', $this->data, TRUE);
 
-		$this->data['body'] = $section_nav . $body;
+		$this->data['body'] = $body;
 
 		return $this->render();
 	}
@@ -143,8 +140,7 @@ class Schedules extends MY_Controller
 		$title = "<h2>{$this->data['title']}</h2>";
 		$body = $this->load->view('partials/deleteconfirm', $this->data, TRUE);
 
-		$section_nav = $this->load->view('partials/dates_times_navigation', ['active' => 'schedules'], TRUE);
-		$this->data['body'] = $section_nav . $title . $body;
+		$this->data['body'] = $title . $body;
 
 		return $this->render();
 	}

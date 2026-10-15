@@ -3,6 +3,23 @@
 //
 
 $global_menu = $this->menu_model->global();
+$setup_navigation = '';
+$current_uri = trim($this->uri->uri_string(), '/');
+$current_uri = preg_replace('#^index\\.php/?#', '', $current_uri);
+$setup_roots = ['departments', 'export', 'holidays', 'periods', 'roles', 'room_schedules', 'schedules', 'sessions', 'settings', 'setup', 'users', 'weeks'];
+$is_setup_page = false;
+foreach ($setup_roots as $root) {
+	if ($current_uri === $root || str_starts_with($current_uri, $root . '/')) {
+		$is_setup_page = true;
+		break;
+	}
+}
+if ($is_setup_page && has_setup_permission()) {
+	$setup_navigation = $this->load->view('partials/setup_navigation', [
+		'setup_menu' => $this->menu_model->setup_menu(),
+		'current_path' => $current_uri,
+	], TRUE);
+}
 
 ?>
 
@@ -138,6 +155,7 @@ var BASE_URL = "<?= base_url() ?>";
 	</header>
 
 	<div class="outer" up-main>
+		<?= $setup_navigation ?>
 
 		<?php if (isset($midsection)): ?>
 			<div class="mid-section" align="center">

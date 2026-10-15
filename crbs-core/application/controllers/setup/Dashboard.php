@@ -30,14 +30,10 @@ class Dashboard extends MY_Controller
 
 	public function index()
 	{
-		$data = [
-			'setup_menu' => $this->menu_model->setup_menu(),
-		];
-
 		$this->data['title'] = lang('setup.setup');
 		$this->data['body'] = '';
 		$this->data['body'] .= $this->session->flashdata('auth');
-		$this->data['body'] .= $this->load->view('setup/index', $data, TRUE);
+		$this->data['body'] .= $this->load->view('setup/index', $this->data, TRUE);
 
 		return $this->render();
 	}

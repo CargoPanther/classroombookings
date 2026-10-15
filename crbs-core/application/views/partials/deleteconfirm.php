@@ -6,7 +6,7 @@
 <table cellpadding="0" cellspacing="0">
 	<tr>
 		<td align="left" valign="middle">
-			<?php echo form_submit( array( 'value' => lang('app.action.delete') ) ) ?> &nbsp;&nbsp;&nbsp; <?php echo anchor( $cancel, lang('app.action.cancel')) ?>
+			<?php echo form_submit( array( 'value' => lang('app.action.delete') ) ) ?> &nbsp;&nbsp;&nbsp; <?php echo anchor( $cancel, lang('app.action.cancel'), ['class' => 'button']) ?>
 		</td>
 	</tr>
 </table>

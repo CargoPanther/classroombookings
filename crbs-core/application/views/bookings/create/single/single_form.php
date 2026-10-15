@@ -12,11 +12,11 @@ $none = sprintf('(%s)', lang('app.none'));
 
 if (!empty($existing_bookings)) {
 	echo '<div class="booking-shared-layout"><div class="booking-shared-list">';
+	$booking_rows = [];
 	foreach ($existing_bookings as $existing_booking) {
 		$is_owner = (int) $existing_booking->user_id === (int) $this->userauth->user->user_id;
 		$is_recurring = !empty($existing_booking->repeat_id);
 		$can_view_user = $is_owner || has_permission($is_recurring ? Permission::BK_RECUR_VIEW_OTHER_USERS : Permission::BK_SGL_VIEW_OTHER_USERS, $room->room_id);
-		$can_view_notes = $is_owner || has_permission($is_recurring ? Permission::BK_RECUR_VIEW_OTHER_NOTES : Permission::BK_SGL_VIEW_OTHER_NOTES, $room->room_id);
 		$name = lang('booking.capacity.reserved');
 		if ($can_view_user && !empty($existing_booking->user)) {
 			$name = !empty($existing_booking->user->displayname)
@@ -85,26 +85,19 @@ if (!empty($existing_bookings)) {
 				],
 			];
 		}
-		$details = [
-			[lang('app.date'), date_output_long($existing_booking->date)],
-			[lang('booking.occurs'), $is_recurring ? lang('booking.type_recurring') : lang('booking.occurs.once')],
-			[lang('booking.capacity'), sprintf('%d %s', $places, $places_label)],
-			[lang('period.period'), html_escape(($existing_booking->period->name ?? '') . ' (' . date_output_time($existing_booking->period->time_start) . ' - ' . date_output_time($existing_booking->period->time_end) . ')')],
-		];
-		if ($can_view_user) $details[] = [lang('booking.booked_by'), html_escape($name)];
-		if (!empty($existing_booking->department->name)) $details[] = [lang('department.department'), html_escape($existing_booking->department->name)];
-		if (!empty($existing_booking->notes)) {
-			$details[] = [lang('booking.notes'), $can_view_notes ? nl2br(html_escape($existing_booking->notes)) : '<em>' . lang('app.not_available') . '</em>'];
-		}
-
-		echo '<section class="booking-detail-section booking-shared-item"><h3>' . html_escape(lang('booking.booking')) . '</h3>';
-		if ($actions) echo iconbar($actions);
-		echo '<dl class="booking-detail-list">';
-		foreach ($details as [$label, $value]) {
-			echo '<div><dt>' . html_escape($label) . '</dt><dd>' . $value . '</dd></div>';
-		}
-		echo '</dl></section>';
+		$action_html = $actions ? iconbar($actions) : '<span class="booking-shared-no-actions">&mdash;</span>';
+		$booking_type = $is_recurring ? lang('booking.type_recurring') : lang('booking.type_single');
+		$booking_rows[] = '<tr><td>' . html_escape($name) . '</td><td>' . html_escape($booking_type) . '</td><td>'
+			. sprintf('%d %s', $places, html_escape($places_label)) . '</td><td>' . $action_html . '</td></tr>';
 	}
+
+	echo '<section class="booking-detail-section booking-shared-item">';
+	echo '<div class="booking-shared-table-wrap"><table class="booking-shared-table"><thead><tr>';
+	echo '<th scope="col">' . html_escape(lang('booking.booked_by')) . '</th>';
+	echo '<th scope="col">' . html_escape(lang('booking.occurs')) . '</th>';
+	echo '<th scope="col">' . html_escape(lang('booking.capacity')) . '</th>';
+	echo '<th scope="col">' . html_escape(lang('app.actions')) . '</th>';
+	echo '</tr></thead><tbody>' . implode('', $booking_rows) . '</tbody></table></div></section>';
 
 	echo '<section class="booking-detail-section booking-room-details"><h3>' . html_escape(lang('room.room_details')) . '</h3><h4>' . html_escape($room->name) . '</h4><dl class="booking-detail-list">';
 	foreach ($room_details as $detail) {
