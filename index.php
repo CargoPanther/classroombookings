@@ -46,7 +46,8 @@ if (is_file($env_file)) {
 	}
 }
 
-define('ENVIRONMENT', isset($_SERVER['CI_ENV']) ? $_SERVER['CI_ENV'] : $env);
+$server_env = $_SERVER['CI_ENV'] ?? getenv('CI_ENV');
+define('ENVIRONMENT', $server_env ?: $env);
 
 
 /*

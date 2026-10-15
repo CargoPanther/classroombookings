@@ -14,6 +14,10 @@ class Login extends MY_Controller
 
 	function index()
 	{
+		if ($this->userauth->logged_in()) {
+			redirect('dashboard');
+		}
+
 		if (setting('auth_microsoft_enabled', 'auth')
 			&& setting('auth_microsoft_auto_login', 'auth')) {
 			redirect('login/microsoft');
@@ -32,6 +36,10 @@ class Login extends MY_Controller
 	 */
 	public function local()
 	{
+		if ($this->userauth->logged_in()) {
+			redirect('dashboard');
+		}
+
 		if ($this->input->post()) {
 			$this->handle_submit();
 		}
@@ -70,12 +78,11 @@ class Login extends MY_Controller
 
 		$columns['c2']['content'] = $logo_html;
 
-		$title = sprintf("<h2>%s</h2>", lang('auth.log_in'));
 		$body = $this->load->view('columns', $columns, TRUE);
 
 		$auth = (string) $this->session->flashdata('auth');
 
-		$this->data['body'] = $title . $auth . $body;
+		$this->data['body'] = $auth . $body;
 
 		return $this->render();
 	}
