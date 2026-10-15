@@ -37,7 +37,7 @@ if ($booking->repeat_id) {
 		'content' => lang('booking.selection.all'),
 	]);
 
-	$cancel = "<br><br><a href='#' up-dismiss>" . lang('booking.cancel.abort') . "</a>";
+	$cancel = "<br><br><a href='#' class='button' up-dismiss>" . lang('booking.cancel.abort') . "</a>";
 
 	$content = implode("\n", $buttons) . $cancel;
 
@@ -53,7 +53,7 @@ if ($booking->repeat_id) {
 		'autofocus' => true,
 	]);
 
-	$cancel = "<a href='#' up-dismiss>" . lang('booking.cancel.abort') . "</a>";
+	$cancel = "<a href='#' class='button' up-dismiss>" . lang('booking.cancel.abort') . "</a>";
 
 	$content = "{$submit} &nbsp; {$cancel}";
 }

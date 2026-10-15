@@ -13,6 +13,7 @@ $params['step'] = 'details';
 
 $items = [];
 if ($can_book_single) {
+	if (empty($has_current_user_booking) && empty($single_create_unavailable)) {
 	$items[] = [
 		'link' => current_url().'?'.http_build_query(array_merge($params, ['booking_type' => 'single'])),
 		'name' => lang('booking.type_single'),
@@ -20,7 +21,9 @@ if ($can_book_single) {
 		'attrs' => ['up-target' => '.bookings-create'],
 	];
 }
+}
 if ($can_book_recur) {
+	if (empty($has_current_user_booking) && empty($single_create_unavailable)) {
 	$items[] = [
 			'link' => current_url().'?'.http_build_query(array_merge($params, ['booking_type' => 'recurring'])),
 			'name' => lang('booking.type_recurring'),
@@ -28,8 +31,9 @@ if ($can_book_recur) {
 			'attrs' => ['up-target' => '.bookings-create'],
 	];
 }
+}
 
-if (count($items) > 1) {
+if (count($items) > 1 && empty($has_current_user_booking) && empty($single_create_unavailable)) {
 	echo iconbar($items, current_url().'?'.http_build_query(array_merge($params, ['booking_type' => $booking_type])));
 }
 
@@ -38,20 +42,20 @@ echo "<br>";
 
 //
 
-if ($message) {
+if ($message && empty($booking_slot_notice)) {
 	echo msgbox('error large', $message);
 }
 
 //
 
-if ($permit_booking) {
+if ($permit_booking || !empty($has_current_user_booking) || !empty($single_create_unavailable)) {
 
 	// Ecnlose subview in form
 	//
 
 	$attrs = [
 		'id' => 'bookings_create_single',
-		'class' => 'cssform',
+		'class' => 'cssform booking-create-single',
 		'up-accept-location' => 'bookings',
 		'up-layer' => 'any',
 		'up-target' => '.bookings-create',

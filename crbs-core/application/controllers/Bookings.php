@@ -126,6 +126,17 @@ class Bookings extends MY_Controller
 
 		$this->data['booking'] = $booking;
 		$this->data['current_user'] = $this->userauth->user;
+		$this->data['shared_bookings'] = [];
+		if ($booking && $booking->status == Bookings_model::STATUS_BOOKED) {
+			$shared_bookings = $this->bookings_model->find_all_for_slot(
+				$booking->date->format('Y-m-d'),
+				$booking->period_id,
+				$booking->room_id
+			);
+			if (count($shared_bookings) > 1) {
+				$this->data['shared_bookings'] = $shared_bookings;
+			}
+		}
 
 		$msg = $this->session->flashdata('bookings');
 
@@ -324,7 +335,12 @@ class Bookings extends MY_Controller
 			$this->data['title'] = $agent->title;
 		}
 
-		$this->data['body'] = $this->load->view('bookings/edit', $this->data, TRUE);
+		$this->data['body'] = $this->input->get('shared_slot')
+			? $this->load->view('bookings/create', [
+				'title' => $this->data['title'],
+				'view' => $this->data['view'],
+			], TRUE)
+			: $this->load->view('bookings/edit', $this->data, TRUE);
 
 		return $this->render();
 	}

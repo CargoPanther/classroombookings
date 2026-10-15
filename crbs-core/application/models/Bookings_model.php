@@ -102,6 +102,7 @@ class Bookings_model extends CI_Model
 			'b.period_id',
 			'b.room_id',
 			'b.user_id',
+			'b.capacity',
 			'b.date',
 			'b.status',
 			'b.notes',
@@ -192,7 +193,7 @@ class Bookings_model extends CI_Model
 
 		foreach ($result as &$row) {
 			$key = Slot::generate_key($row->date, $row->period_id, $row->room_id);
-			$out[ $key ] = $this->wake_value($row);
+			$out[$key] = $this->wake_value($row);
 		}
 
 		return $out;
@@ -255,7 +256,96 @@ class Bookings_model extends CI_Model
 
 		foreach ($result as &$row) {
 			$key = Slot::generate_key($row->date, $row->period_id, $row->room_id);
-			$out[ $key ] = $this->wake_value($row);
+			$out[$key] = $this->wake_value($row);
+		}
+
+		return $out;
+	}
+
+
+	public function find_all_for_slot($date, $period_id, $room_id)
+	{
+		$this->db->reset_query();
+		$this->db->select([
+			'b.booking_id', 'b.repeat_id', 'b.period_id', 'b.room_id', 'b.user_id',
+			'b.capacity', 'b.date', 'b.status', 'b.notes', 'b.department_id',
+			'p.name AS period__name',
+			'p.time_start AS period__time_start',
+			'p.time_end AS period__time_end',
+		]);
+		$this->db->select([
+			'u.user_id AS user__user_id',
+			'u.username AS user__username',
+			'u.displayname AS user__displayname',
+		], FALSE);
+		$this->db->select('d.name AS department__name', FALSE);
+		$this->db->from("{$this->table} AS b");
+		$this->db->join('periods p', 'period_id', 'INNER');
+		$this->db->join('users u', 'user_id', 'LEFT');
+		$this->db->join('departments d', 'b.department_id = d.department_id', 'LEFT');
+		$this->db->where([
+			'b.date' => $date,
+			'b.period_id' => $period_id,
+			'b.room_id' => $room_id,
+			'b.status' => self::STATUS_BOOKED,
+		]);
+		$this->db->order_by('b.booking_id', 'ASC');
+
+		$query = $this->db->get();
+		$out = [];
+		$previous_include = $this->include;
+		$this->include = ['user'];
+		try {
+			foreach ($query->result() as $row) {
+				$out[] = $this->wake_value($row);
+			}
+		} finally {
+			$this->include = $previous_include;
+		}
+		return $out;
+	}
+
+
+	public function find_all_for_dates(array $dates, $period_id, $room_id)
+	{
+		if (empty($dates)) return [];
+
+		$this->db->reset_query();
+		$this->db->select([
+			'b.booking_id', 'b.repeat_id', 'b.period_id', 'b.room_id', 'b.user_id',
+			'b.created_by', 'b.capacity', 'b.date', 'b.status', 'b.notes',
+			'p.name AS period__name',
+			'p.time_start AS period__time_start',
+			'p.time_end AS period__time_end',
+		]);
+		$this->db->select([
+			'u.user_id AS user__user_id',
+			'u.username AS user__username',
+			'u.displayname AS user__displayname',
+		], FALSE);
+		$this->db->from("{$this->table} AS b");
+		$this->db->join('periods p', 'period_id', 'INNER');
+		$this->db->join('users u', 'user_id', 'LEFT');
+		$this->db->where([
+			'b.period_id' => $period_id,
+			'b.room_id' => $room_id,
+			'b.status' => self::STATUS_BOOKED,
+		]);
+		$this->db->where_in('b.date', $dates);
+		$this->db->order_by('b.date', 'ASC');
+		$this->db->order_by('b.booking_id', 'ASC');
+
+		$query = $this->db->get();
+		$out = [];
+		$previous_include = $this->include;
+		$this->include = [];
+		try {
+			foreach ($query->result() as $row) {
+				$key = Slot::generate_key($row->date, $row->period_id, $row->room_id);
+				$out[$key][] = $this->wake_value($row);
+			}
+		} finally {
+			$this->include = $previous_include;
 		}
 
 		return $out;
@@ -281,6 +371,7 @@ class Bookings_model extends CI_Model
 			'b.period_id',
 			'b.room_id',
 			'b.user_id',
+			'b.capacity',
 			'b.date',
 			'b.status',
 			'b.notes',
@@ -348,7 +439,7 @@ class Bookings_model extends CI_Model
 
 		foreach ($result as &$row) {
 			$key = Slot::generate_key($row->date, $row->period_id, $row->room_id);
-			$out[ $key ] = $this->wake_value($row);
+			$out[$key][] = $this->wake_value($row);
 		}
 
 		return $out;
@@ -360,6 +451,7 @@ class Bookings_model extends CI_Model
 		$columns = [
 			'Booking ID' => 'b.booking_id',
 			'Recurring ID' => 'b.repeat_id',
+			'People' => 'b.capacity',
 			'Type' => "IF(b.repeat_id IS NULL, 'Single', 'Recurring')",
 			'Status' => "CASE b.status WHEN 10 THEN 'Booked' WHEN 15 THEN 'Cancelled' END",
 			'Session' => 'sess.name',
@@ -437,22 +529,61 @@ class Bookings_model extends CI_Model
 	 * be made, no conflicts will occur and all parameters are correct.
 	 *
 	 */
-	public function validate_booking($data)
+	public function validate_booking($data, array $exclude_booking_ids = [], $check_duplicate_user = TRUE)
 	{
-		$sql = 'SELECT booking_id
+		$capacity = filter_var($data['capacity'] ?? 1, FILTER_VALIDATE_INT);
+		if ($capacity === FALSE || $capacity < 1) {
+			throw BookingValidationException::forCapacityExceeded();
+		}
+
+		$room_query = $this->db->query(
+			'SELECT capacity FROM rooms WHERE room_id = ? FOR UPDATE',
+			[$data['room_id']]
+		);
+		$room = $room_query->row();
+		if ( ! $room) throw BookingValidationException::forCapacityExceeded();
+
+		$room_capacity = max(1, (int) $room->capacity);
+		if ($capacity > $room_capacity) {
+			throw BookingValidationException::forCapacityExceeded();
+		}
+
+		$exclude_booking_ids = array_values(array_filter(array_map('intval', $exclude_booking_ids)));
+		if ($check_duplicate_user) {
+			$person_id = !empty($data['user_id'])
+				? (int) $data['user_id']
+				: (int) ($data['_identity_creator_id'] ?? $this->userauth->user->user_id);
+			$duplicate_sql = 'SELECT booking_id FROM bookings
+					WHERE `date` = ? AND period_id = ? AND room_id = ? AND status = ?
+					AND (user_id = ? OR (user_id IS NULL AND created_by = ?))';
+			$duplicate_bindings = [
+				$data['date'], $data['period_id'], $data['room_id'], self::STATUS_BOOKED,
+				$person_id, $person_id,
+			];
+			if ($exclude_booking_ids) {
+				$duplicate_sql .= ' AND booking_id NOT IN (' . implode(',', array_fill(0, count($exclude_booking_ids), '?')) . ')';
+				$duplicate_bindings = array_merge($duplicate_bindings, $exclude_booking_ids);
+			}
+			$duplicate = $this->db->query($duplicate_sql, $duplicate_bindings)->row();
+			if ($duplicate) {
+				throw BookingValidationException::forDuplicateUserBooking();
+			}
+		}
+
+		$sql = 'SELECT COALESCE(SUM(capacity), 0) AS booked_capacity
 				FROM bookings
-				WHERE `date` = ?
-				AND period_id = ?
-				AND room_id = ?
-				AND status = ?
-				LIMIT 1';
+				WHERE `date` = ? AND period_id = ? AND room_id = ? AND status = ?';
+		$bindings = [$data['date'], $data['period_id'], $data['room_id'], self::STATUS_BOOKED];
+		$exclude_booking_ids = array_values(array_filter(array_map('intval', $exclude_booking_ids)));
+		if ($exclude_booking_ids) {
+			$sql .= ' AND booking_id NOT IN (' . implode(',', array_fill(0, count($exclude_booking_ids), '?')) . ')';
+			$bindings = array_merge($bindings, $exclude_booking_ids);
+		}
 
-		$query = $this->db->query($sql, [$data['date'], $data['period_id'], $data['room_id'], self::STATUS_BOOKED]);
-
-		$row = $query->row();
-
-		if ($query->num_rows() === 1 && $row->booking_id) {
-			throw BookingValidationException::forExistingBooking();
+		$query = $this->db->query($sql, $bindings);
+		$booked_capacity = (int) $query->row()->booked_capacity;
+		if ($booked_capacity + $capacity > $room_capacity) {
+			throw BookingValidationException::forCapacityExceeded();
 		}
 
 		return TRUE;
@@ -461,23 +592,35 @@ class Bookings_model extends CI_Model
 
 	public function create($data)
 	{
+		$this->error = FALSE;
+		$data = $this->sleep_values($data);
+		$data['capacity'] = isset($data['capacity']) ? (int) $data['capacity'] : 1;
+		$data['_identity_creator_id'] = $this->userauth->user->user_id;
+
+		$this->db->trans_begin();
 		try {
 			$this->validate_booking($data);
 		} catch (BookingValidationException $e) {
 			$this->error = $e->getMessage();
+			$this->db->trans_rollback();
 			return FALSE;
 		}
 
-		$data = $this->sleep_values($data);
-
 		$data['created_at'] = date('Y-m-d H:i:s');
 		$data['created_by'] = $this->userauth->user->user_id;
+		unset($data['_identity_creator_id']);
 
 		$ins = $this->db->insert($this->table, $data);
+		if ( ! $ins) {
+			$this->db->trans_rollback();
+			return FALSE;
+		}
 
-		return ($ins && $id = $this->db->insert_id())
-			? $id
-			: FALSE;
+		$id = $this->db->insert_id();
+		$success = $this->db->trans_status();
+		$this->db->trans_commit();
+
+		return ($success && $id) ? $id : FALSE;
 	}
 
 
@@ -492,11 +635,44 @@ class Bookings_model extends CI_Model
 
 			case UpdateAgent::EDIT_ONE:
 
+				$booking = $this->get($booking_id);
+				if ( ! $booking || $booking->status != self::STATUS_BOOKED) return FALSE;
+				$target = array_merge([
+					'date' => $booking->date->format('Y-m-d'),
+					'period_id' => $booking->period_id,
+					'room_id' => $booking->room_id,
+					'user_id' => $booking->user_id,
+					'capacity' => $booking->capacity ?? 1,
+					'_identity_creator_id' => $booking->created_by ?? $this->userauth->user->user_id,
+				], $data);
+				$identity_changed = (
+					$target['date'] != $booking->date->format('Y-m-d')
+					|| (int) $target['period_id'] !== (int) $booking->period_id
+					|| (int) $target['room_id'] !== (int) $booking->room_id
+					|| (int) ($target['user_id'] ?? 0) !== (int) ($booking->user_id ?? 0)
+				);
+
+				$this->db->trans_begin();
+				$this->db->query('SELECT room_id FROM rooms WHERE room_id = ? FOR UPDATE', [$booking->room_id]);
+				try {
+					$this->validate_booking($target, [(int) $booking_id], $identity_changed);
+				} catch (BookingValidationException $e) {
+					$this->error = $e->getMessage();
+					$this->db->trans_rollback();
+					return FALSE;
+				}
+
 				$where = [
 					'booking_id' => $booking_id,
 				];
-
-				return $this->db->update($this->table, $data, $where, 1);
+				$updated = $this->db->update($this->table, $data, $where, 1);
+				$success = $updated && $this->db->trans_status();
+				if ($success) {
+					$this->db->trans_commit();
+				} else {
+					$this->db->trans_rollback();
+				}
+				return $success;
 
 				break;
 

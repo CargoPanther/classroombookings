@@ -29,6 +29,7 @@ class UpdateAgent extends BaseAgent
 	const FEATURE_EDIT_USER = 'edit_user';
 	const FEATURE_VIEW_NOTES = 'view_notes';
 	const FEATURE_EDIT_NOTES = 'edit_notes';
+	const FEATURE_CAPACITY = 'capacity';
 
 	// Edit modes
 	const EDIT_ONE = '1';
@@ -128,6 +129,7 @@ class UpdateAgent extends BaseAgent
 			self::FEATURE_DEPARTMENT => $can_set_departent,
 			self::FEATURE_VIEW_USER => $is_booking_owner || $can_view_user,
 			self::FEATURE_EDIT_USER => ($can_view_user && $can_set_user),
+			self::FEATURE_CAPACITY => ($is_booking_owner || $can_edit_other) && $this->edit_mode === self::EDIT_ONE,
 		];
 
 		// If a recurring booking future or all is being edited, then it can't be moved in time or space.
@@ -160,11 +162,25 @@ class UpdateAgent extends BaseAgent
 	 */
 	public function get_view_data()
 	{
+		$room_capacity = max(1, (int) ($this->booking->room->capacity ?? 1));
+		$slot_bookings = $this->CI->bookings_model->find_all_for_slot(
+			$this->booking->date->format('Y-m-d'),
+			$this->booking->period_id,
+			$this->booking->room_id
+		);
+		$other_booked_capacity = 0;
+		foreach ($slot_bookings as $slot_booking) {
+			if ((int) $slot_booking->booking_id === (int) $this->booking->booking_id) continue;
+			$other_booked_capacity += max(1, (int) ($slot_booking->capacity ?? 1));
+		}
+		$capacity_max = max(1, $room_capacity - $other_booked_capacity);
+
 		$vars = [
 
 			'booking' => $this->booking,
 			'features' => $this->features,
 			'edit_mode' => $this->edit_mode,
+			'capacity_max' => $capacity_max,
 
 		];
 
@@ -215,6 +231,10 @@ class UpdateAgent extends BaseAgent
 
 		if ($this->features[self::FEATURE_EDIT_NOTES]) {
 			$booking_data['notes'] = $this->CI->input->post('notes');
+		}
+
+		if ($this->features[self::FEATURE_CAPACITY]) {
+			$booking_data['capacity'] = (int) $this->CI->input->post('capacity');
 		}
 
 		$update = $this->CI->bookings_model->update($this->booking->booking_id, $booking_data, $this->edit_mode);
@@ -268,6 +288,10 @@ class UpdateAgent extends BaseAgent
 
 		if ($this->features[self::FEATURE_EDIT_NOTES]) {
 			$rules[] = ['field' => 'notes', 'label' => 'lang:booking.notes', 'rules' => 'max_length[255]'];
+		}
+
+		if ($this->features[self::FEATURE_CAPACITY]) {
+			$rules[] = ['field' => 'capacity', 'label' => 'lang:booking.capacity', 'rules' => 'required|integer|greater_than[0]'];
 		}
 
 		return $rules;

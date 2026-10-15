@@ -131,11 +131,10 @@ class Grid
 			return msgbox('error', $this->context->exception->getMessage());
 		}
 
-		$ms = $this->render_multiselect_controls('header');
-
 		$table = $this->table->render();
+		$tip = '<p class="bookings-grid-tip">' . html_escape(lang('booking.capacity.tip')) . '</p>';
 
-		return $ms . $table;
+		return $tip . $table;
 	}
 
 
@@ -208,19 +207,27 @@ class Grid
 		$cells = [];
 
 		$legend = html_escape(lang('booking.legend.legend'));
-		$cells[] = "<td width='25%' align='right' valign='middle'><strong>{$legend}:</strong></td>";
+		$cells[] = "<td align='right' valign='middle'><strong>{$legend}:</strong></td>";
 
 		$label = html_escape(lang('booking.legend.free'));
 		$class = 'bookings-grid-slot booking-status-available';
-		$cells[] = "<td class='{$class}' width='25%' align='center'><span class='bookings-grid-button'>{$label}</div></td>";
+		$cells[] = "<td class='{$class}' align='center'><span class='bookings-grid-button'>{$label}</span></td>";
 
 		$label = html_escape(lang('booking.legend.static'));
 		$class = 'bookings-grid-slot booking-status-booked booking-status-booked-recurring';
-		$cells[] = "<td class='{$class}' width='25%' align='center'><span class='bookings-grid-button'>{$label}</div></td>";
+		$cells[] = "<td class='{$class}' align='center'><span class='bookings-grid-button'>{$label}</span></td>";
 
 		$label = html_escape(lang('booking.legend.staff'));
 		$class = 'bookings-grid-slot booking-status-booked booking-status-booked-single';
-		$cells[] = "<td class='{$class}' width='25%' align='center'><span class='bookings-grid-button'>{$label}</div></td>";
+		$cells[] = "<td class='{$class}' align='center'><span class='bookings-grid-button'>{$label}</span></td>";
+
+		$label = html_escape(lang('booking.legend.shared_single'));
+		$class = 'bookings-grid-slot booking-status-available booking-status-shared-single';
+		$cells[] = "<td class='{$class}' align='center'><span class='bookings-grid-button'>{$label}</span></td>";
+
+		$label = html_escape(lang('booking.legend.shared_recurring'));
+		$class = 'bookings-grid-slot booking-status-available booking-status-shared-recurring';
+		$cells[] = "<td class='{$class}' align='center'><span class='bookings-grid-button'>{$label}</span></td>";
 
 		$cells_str = implode("\n", $cells);
 

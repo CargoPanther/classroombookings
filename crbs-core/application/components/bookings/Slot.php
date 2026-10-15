@@ -59,6 +59,7 @@ class Slot
 
 	// Booking, if slot booked.
 	private ?object $booking;
+	private array $bookings = [];
 
 	// DateTime instance created from the passed date
 	private DateTime $datetime;
@@ -90,10 +91,18 @@ class Slot
 
 		if ($this->date && $this->period && $this->room) {
 			$this->key = self::generate_key($this->date->date, $this->period->period_id, $this->room->room_id);
+			$this->view_data = [
+				'bookings' => [],
+				'booked_capacity' => 0,
+				'room_capacity' => max(1, (int) ($this->room->capacity ?? 1)),
+				'remaining_capacity' => max(1, (int) ($this->room->capacity ?? 1)),
+			];
 		}
 
 		if ($this->key && array_key_exists($this->key, $this->context->bookings)) {
-			$this->booking = $this->context->bookings[ $this->key ];
+			$bookings = $this->context->bookings[$this->key];
+			$this->bookings = is_array($bookings) ? array_values($bookings) : [$bookings];
+			$this->booking = $this->bookings[0] ?? null;
 		}
 	}
 
@@ -195,7 +204,23 @@ class Slot
 	{
 		if ($this->continue === false) return;
 
-		if ( ! is_null($this->booking)) {
+		if ( ! empty($this->bookings)) {
+
+			$booked_capacity = array_sum(array_map(
+				fn($booking) => max(1, (int) ($booking->capacity ?? 1)),
+				$this->bookings
+			));
+			$room_capacity = max(1, (int) ($this->room->capacity ?? 1));
+			$remaining_capacity = max(0, $room_capacity - $booked_capacity);
+			$this->view_data = [
+				'booking' => $this->booking,
+				'bookings' => $this->bookings,
+				'booked_capacity' => $booked_capacity,
+				'room_capacity' => $room_capacity,
+				'remaining_capacity' => $remaining_capacity,
+			];
+
+			if ($remaining_capacity > 0) return;
 
 			// Existing booking
 
@@ -205,10 +230,6 @@ class Slot
 			$this->reason = ($this->booking->repeat_id)
 				? self::BOOKED_RECURRING
 				: self::BOOKED_SINGLE;
-
-			$this->view_data = [
-				'booking' => $this->booking,
-			];
 
 			// Set some more permission-based flags for the view
 

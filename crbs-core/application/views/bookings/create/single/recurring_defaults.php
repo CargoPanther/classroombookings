@@ -67,6 +67,21 @@ $input = html_escape($room->name);
 echo "<p>{$label}{$input}</p>";
 
 
+// Capacity
+//
+$field = 'capacity';
+$label = form_label(lang('booking.capacity.form_label'), $field);
+$input = form_input([
+	'name' => $field,
+	'id' => $field,
+	'type' => 'number',
+	'min' => 1,
+	'max' => max(1, (int) ($room->capacity ?? 1)),
+	'value' => set_value($field, $recurring_default_capacity ?? 1, FALSE),
+]);
+echo "<p>{$label}{$input}</p>";
+
+
 // Department
 //
 $field = 'department_id';

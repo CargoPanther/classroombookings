@@ -12,6 +12,9 @@ $lang['room.no_items'] = 'No rooms in this group.';
 $lang['room.room_details'] = 'Room details';
 
 $lang['room.field.name'] = 'Name';
+$lang['room.field.capacity'] = 'Capacity';
+$lang['room.field.capacity.hint'] = 'Maximum number of people this room can accommodate per booking slot.';
+$lang['room.capacity.too_low'] = 'Capacity cannot be lower than the number of people already booked in a slot.';
 $lang['room.field.description'] = 'Description';
 $lang['room.field.location'] = 'Location';
 $lang['room.field.user_id'] = 'Owner';

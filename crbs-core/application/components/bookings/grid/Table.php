@@ -284,7 +284,6 @@ EOH;
 				sprintf('booking-status-%s', $slot->status),
 				sprintf('booking-status-%s-%s', $slot->status, $slot->reason),
 			];
-
 			if ($slot->booking && $slot->booking->booking_id == $highlight) {
 				$slot_classes[] = 'highlight';
 			}

@@ -107,8 +107,13 @@ class Multi_booking_model extends CI_Model
 			'p.time_start AS period__time_start',
 			'p.time_end AS period__time_end',
 			'r.name AS room__name',
+			'r.capacity AS room__capacity',
 			'd.weekday AS weekday',
 		]);
+		$this->db->select(
+			'(SELECT COALESCE(SUM(b.capacity), 0) FROM bookings b WHERE b.`date` = mbs.`date` AND b.period_id = mbs.period_id AND b.room_id = mbs.room_id AND b.status = ' . Bookings_model::STATUS_BOOKED . ') AS booked_capacity',
+			FALSE
+		);
 
 		$this->db->from("multi_bookings_slots mbs");
 		$this->db->join('periods p', 'period_id', 'INNER');
@@ -182,7 +187,9 @@ class Multi_booking_model extends CI_Model
 			];
 			$row->capabilities = $capabilities;
 
-			$out[ $key ] = nest_object_keys($row);
+			$row = nest_object_keys($row);
+			$row->remaining_capacity = max(0, (int) ($row->room->capacity ?? 1) - (int) ($row->booked_capacity ?? 0));
+			$out[$key] = $row;
 		}
 
 		return $out;

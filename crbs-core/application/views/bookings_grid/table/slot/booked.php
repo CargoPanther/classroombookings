@@ -99,9 +99,9 @@ $is_deletable = booking_cancelable($booking);
 
 	$link_attrs = [
 		'class' => $cls,
-		'up-position' => "right",
 		'up-target' => ".bookings-view",
-		'up-layer' => "new drawer",
+		'up-layer' => "new modal",
+		'up-size' => "large",
 		'up-history' => "false",
 		'up-preload' => '',
 	];

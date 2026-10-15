@@ -157,6 +157,7 @@ class Rooms extends MY_Controller
 		$this->form_validation->set_rules('room_id', 'ID', 'integer');
 		$this->form_validation->set_rules('room_group_id', 'lang:room_group.group', 'required|integer');
 		$this->form_validation->set_rules('name', 'lang:room.field.name', 'required|min_length[1]|max_length[20]');
+		$this->form_validation->set_rules('capacity', 'lang:room.field.capacity', 'required|integer|greater_than[0]|callback_capacity_fits_existing_bookings');
 		$this->form_validation->set_rules('user_id', 'lang:room.field.user_id', 'integer');
 		$this->form_validation->set_rules('location', 'lang:room.field.location', 'max_length[40]');
 		$this->form_validation->set_rules('notes', 'lang:room.field.notes', 'max_length[255]');
@@ -168,6 +169,7 @@ class Rooms extends MY_Controller
 
 		$room_data = array(
 			'name' => $this->input->post('name'),
+			'capacity' => (int) $this->input->post('capacity'),
 			'user_id' => $this->input->post('user_id') ?: null,
 			'location' => $this->input->post('location'),
 			'notes' => $this->input->post('notes'),
@@ -222,6 +224,19 @@ class Rooms extends MY_Controller
 		$this->session->set_flashdata('saved', $flashmsg);
 
 		redirect($uri);
+	}
+
+
+	public function capacity_fits_existing_bookings($capacity)
+	{
+		$room_id = (int) $this->input->post('room_id');
+		if ( ! $room_id) return TRUE;
+
+		$max_occupied = $this->rooms_model->max_occupied_capacity($room_id);
+		if ((int) $capacity >= $max_occupied) return TRUE;
+
+		$this->form_validation->set_message('capacity_fits_existing_bookings', lang('room.capacity.too_low'));
+		return FALSE;
 	}
 
 

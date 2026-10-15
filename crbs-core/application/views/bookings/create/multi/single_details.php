@@ -49,6 +49,7 @@ if ($show_room_col) {
 $cols[] = ['data' => lang('department.department')];
 $cols[] = ['data' => lang('user.user')];
 $cols[] = ['data' => lang('booking.notes')];
+$cols[] = ['data' => lang('booking.capacity.form_label'), 'width' => '10%'];
 
 $this->table->set_heading($cols);
 
@@ -181,6 +182,19 @@ if (is_array($multibooking->slots)) {
 			$notes_col = msgbox('notice is-solo large', lang('booking.error.no_permission_room_date'));
 		}
 
+		$capacity_field = sprintf('slot_single[%d][capacity]', $slot->mbs_id);
+		$capacity_col = form_input([
+			'name' => $capacity_field,
+			'id' => $capacity_field,
+			'type' => 'number',
+			'min' => 1,
+			'max' => max(1, (int) ($slot->remaining_capacity ?? $slot->room->capacity ?? 1)),
+			'step' => 1,
+			'value' => set_value($capacity_field, 1, FALSE),
+		]);
+		$remaining_capacity = max(0, (int) ($slot->remaining_capacity ?? $slot->room->capacity ?? 1));
+		$capacity_col .= '<div class="hint">' . sprintf(lang('booking.capacity.remaining_short'), $remaining_capacity) . '</div>';
+
 		// Room
 		//
 		$room_col = html_escape($slot->room->name);
@@ -197,6 +211,7 @@ if (is_array($multibooking->slots)) {
 		$row[] = $department_col;
 		$row[] = $user_col;
 		$row[] = $notes_col;
+		$row[] = $capacity_col;
 
 		$this->table->add_row($row);
 

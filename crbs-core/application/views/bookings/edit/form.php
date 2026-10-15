@@ -118,6 +118,30 @@ if ($features[UpdateAgent::FEATURE_ROOM]) {
 echo "<p>{$label}{$input}</p>";
 
 
+// Capacity
+//
+$field = 'capacity';
+$label = form_label(lang('booking.capacity.form_label'), $field);
+$capacity_value = set_value($field, max(1, (int) ($booking->capacity ?? 1)), FALSE);
+if ($features[UpdateAgent::FEATURE_CAPACITY]) {
+	$input = form_input([
+		'name' => $field,
+		'id' => $field,
+		'type' => 'number',
+		'min' => 1,
+		'max' => $capacity_max,
+		'step' => 1,
+		'required' => TRUE,
+		'value' => $capacity_value,
+	]);
+} else {
+	$count = max(1, (int) ($booking->capacity ?? 1));
+	$unit = $count === 1 ? lang('booking.capacity.person') : lang('booking.capacity.people');
+	$input = sprintf('%d %s', $count, $unit);
+}
+echo sprintf("<p>%s%s</p>%s", $label, $input, form_error($field));
+
+
 // Department
 //
 $field = 'department_id';
@@ -204,7 +228,25 @@ $submit = form_button([
 
 $cancel = anchor($return_uri, lang('app.action.cancel'), ['up-dismiss' => '']);
 
-echo "<div class='submit' style='border-top:0px;'>{$submit} &nbsp; {$cancel}</div>";
+$cancel_booking = '';
+if (booking_cancelable($booking)) {
+	$params = $this->input->get('params') ?? '';
+	$cancel_choices = $this->load->view('bookings/cancel_choice', [
+		'booking' => $booking,
+		'current_user' => $this->userauth->user,
+		'params' => $params,
+	], TRUE);
+	$cancel_booking = anchor('#', lang('booking.action.cancel_booking'), [
+		'up-layer' => 'new popup',
+		'up-align' => 'right',
+		'up-size' => 'medium',
+		'up-content' => html_escape($cancel_choices),
+		'up-class' => 'booking-choices-cancel',
+	]);
+	$cancel_booking = str_replace(site_url('#'), '#', $cancel_booking);
+}
+
+echo "<div class='submit' style='border-top:0px;'>{$submit} &nbsp; {$cancel_booking} &nbsp; {$cancel}</div>";
 
 
 // End

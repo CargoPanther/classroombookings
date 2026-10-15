@@ -13,33 +13,35 @@ $cls = 'is-repeat';
 
 
 $buttons = [];
+$edit_target = !empty($shared_slot) ? '.bookings-create' : '.bookings-edit';
+$edit_source = !empty($shared_slot) ? ['shared_slot' => 1] : [];
 
-$uri = sprintf('bookings/edit/%d?%s', $booking->booking_id, http_build_query(['params' => $params, 'edit' => '1']));
+$uri = sprintf('bookings/edit/%d?%s', $booking->booking_id, http_build_query(array_merge(['params' => $params, 'edit' => '1'], $edit_source)));
 $buttons[] = form_button([
 	'type' => 'button',
 	'content' => lang('booking.selection.this_only'),
 	'up-href' => site_url($uri),
-	'up-target' => '.bookings-edit',
-	'up-layer' => 'new modal',
+	'up-target' => $edit_target,
+	'up-layer' => 'parent',
 	'up-mode' => 'modal',
 ]);
 
-$uri = sprintf('bookings/edit/%d?%s', $booking->booking_id, http_build_query(['params' => $params, 'edit' => 'future']));
+$uri = sprintf('bookings/edit/%d?%s', $booking->booking_id, http_build_query(array_merge(['params' => $params, 'edit' => 'future'], $edit_source)));
 $buttons[] = form_button([
 	'type' => 'button',
 	'content' => lang('booking.selection.future'),
 	'up-href' => site_url($uri),
-	'up-target' => '.bookings-edit',
-	'up-layer' => 'new modal',
+	'up-target' => $edit_target,
+	'up-layer' => 'parent',
 ]);
 
-$uri = sprintf('bookings/edit/%d?%s', $booking->booking_id, http_build_query(['params' => $params, 'edit' => 'all']));
+$uri = sprintf('bookings/edit/%d?%s', $booking->booking_id, http_build_query(array_merge(['params' => $params, 'edit' => 'all'], $edit_source)));
 $buttons[] = form_button([
 	'type' => 'button',
 	'content' => lang('booking.selection.all'),
 	'up-href' => site_url($uri),
-	'up-target' => '.bookings-edit',
-	'up-layer' => 'new modal',
+	'up-target' => $edit_target,
+	'up-layer' => 'parent',
 ]);
 
 $cancel = "<br><br><a href='#' up-dismiss>" . lang('app.action.cancel') . "</a>";

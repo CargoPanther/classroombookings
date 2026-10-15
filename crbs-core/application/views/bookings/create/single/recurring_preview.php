@@ -6,8 +6,7 @@ use app\components\Calendar;
 // Weekday name that the selected date falls on
 $day_name = Calendar::get_day_name($date_info->weekday);
 
-// Number of conflicts found
-$conflict_count = 0;
+$conflict_count = $conflict_count ?? 0;
 
 
 // Generate table of bookings
@@ -28,27 +27,41 @@ foreach ($slots as $key => $slot) {
 
 	$date = date_output_long($slot['datetime']);
 
-	$existing_html = '';
-
-	if (isset($slot['booking'])) {
-
-		$conflict_count++;
-
-		$user_label = !empty($slot['booking']->user->displayname)
-			? $slot['booking']->user->displayname
-			: $slot['booking']->user->username;
-
-		$notes_html = '';
-		if (!empty($slot['booking']->notes)) {
-			$notes = html_escape($slot['booking']->notes);
-			$tooltip = '';
-			if (strlen($notes) > 15) {
-				$tooltip = 'up-tooltip="' . $notes . '"';
+	$existing_html = sprintf(
+		lang('booking.capacity.remaining'),
+		(int) $slot['booked_capacity'],
+		(int) $room_capacity,
+		(int) $slot['remaining_capacity']
+	);
+	if (!empty($slot['bookings'])) {
+		$existing_html .= '<ul class="recurring-slot-bookings">';
+		foreach ($slot['bookings'] as $booking) {
+			$is_owner = (int) ($booking->user_id ?? $booking->created_by ?? 0) === (int) $user->user_id;
+			$is_recurring_booking = !empty($booking->repeat_id);
+			$can_view_user = $is_owner || has_permission(
+				$is_recurring_booking ? Permission::BK_RECUR_VIEW_OTHER_USERS : Permission::BK_SGL_VIEW_OTHER_USERS,
+				$room->room_id
+			);
+			$can_view_notes = $is_owner || has_permission(
+				$is_recurring_booking ? Permission::BK_RECUR_VIEW_OTHER_NOTES : Permission::BK_SGL_VIEW_OTHER_NOTES,
+				$room->room_id
+			);
+			$user_label = lang('booking.capacity.reserved');
+			if ($can_view_user && !empty($booking->user)) {
+				$user_label = !empty($booking->user->displayname) ? $booking->user->displayname : $booking->user->username;
 			}
-			$notes_html = '<div ' . $tooltip . '>'.character_limiter($notes, 15).'</div>';
+			$existing_html .= '<li>' . html_escape($user_label) . ' — ' . sprintf(
+				lang('booking.capacity.booked_by'),
+				max(1, (int) ($booking->capacity ?? 1)),
+				max(1, (int) ($booking->capacity ?? 1)) === 1 ? lang('booking.capacity.person') : lang('booking.capacity.people')
+			);
+			if (!empty($booking->notes)) {
+				$notes = $can_view_notes ? html_escape($booking->notes) : html_escape(lang('app.not_available'));
+				$existing_html .= '<div>' . $notes . '</div>';
+			}
+			$existing_html .= '</li>';
 		}
-
-		$existing_html = $user_label . $notes_html;
+		$existing_html .= '</ul>';
 	}
 
 	$date_ymd = $slot['datetime']->format('Y-m-d');
@@ -57,16 +70,17 @@ foreach ($slots as $key => $slot) {
 	// Default value
 	$hidden_html = form_hidden($field_name, 'do_not_book');
 
-	if (isset($slot['booking'])) {
-
-		$hidden = form_hidden(sprintf('dates[%s][replace_booking_id]', $date_ymd), $slot['booking']->booking_id);
-
+	if (empty($slot['can_book'])) {
+		$replace_booking_id = $slot['bookings'][0]->booking_id ?? '';
+		$hidden = $replace_booking_id
+			? form_hidden(sprintf('dates[%s][replace_booking_id]', $date_ymd), $replace_booking_id)
+			: '';
 		$options_value = set_value($field_name);
 
 		$actions_list = form_dropdown([
 			'name' => $field_name,
 			'options' => $slot['actions'],
-			'selected' => $options_value,
+			'selected' => $options_value ?: 'do_not_book',
 		]);
 
 		$actions_html = $hidden . $actions_list;
@@ -86,7 +100,7 @@ foreach ($slots as $key => $slot) {
 
 		$input_label = form_label($input . lang('booking.create_booking'), $field_id, ['class' => 'ni']);
 
-		$actions_html = $input_label;
+		$actions_html = $input_label . '<div class="hint">' . sprintf(lang('booking.capacity.remaining_short'), (int) $slot['remaining_capacity']) . '</div>';
 	}
 
 	$this->table->add_row($date, $hidden_html . $actions_html, $existing_html);
@@ -110,6 +124,11 @@ $info['period.period'] = $period_html;
 
 $room_html = html_escape($room->name);
 $info['room.room'] = $room_html;
+$info['booking.capacity.form_label'] = sprintf(
+	'%d %s',
+	(int) $booking_capacity,
+	(int) $booking_capacity === 1 ? lang('booking.capacity.person') : lang('booking.capacity.people')
+);
 
 if ($department) {
 	$department_html = html_escape($department->name);
@@ -140,6 +159,8 @@ if (isset($instances_msg)) {
 	echo $instances_msg;
 }
 
+echo msgbox('info', lang('booking.capacity.recurring.skip_notice'), FALSE);
+
 if ($conflict_count > 0) {
 	$str = ($conflict_count === 1)
 		? lang('booking.conflict.one')
@@ -164,7 +185,10 @@ $hidden = [
 	'department_id' => set_value('department_id'),
 	'user_id' => set_value('user_id'),
 	'notes' => set_value('notes'),
+	'capacity' => $booking_capacity,
 	'date' => set_value('date'),
+	'recurring_start' => set_value('recurring_start'),
+	'recurring_end' => set_value('recurring_end'),
 ];
 
 echo form_hidden($hidden);

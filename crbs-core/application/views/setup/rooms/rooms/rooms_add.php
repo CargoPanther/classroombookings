@@ -35,6 +35,25 @@ echo form_open_multipart(current_url(), array('class' => 'cssform', 'id' => 'roo
 	<?php echo form_error($field); ?>
 
 	<p>
+		<label for="capacity" class="required"><?= lang('room.field.capacity') ?></label>
+		<?php
+		$field = 'capacity';
+		$value = set_value($field, isset($room) ? $room->capacity : 1, FALSE);
+		echo form_input([
+			'name' => $field,
+			'id' => $field,
+			'type' => 'number',
+			'min' => 1,
+			'step' => 1,
+			'value' => $value,
+			'tabindex' => tab_index(),
+		]);
+		?>
+		<span class="hint"><?= lang('room.field.capacity.hint') ?></span>
+	</p>
+	<?php echo form_error($field); ?>
+
+	<p>
 		<label for="room_group_id" class="required"><?= lang('room_group.group') ?></label>
 		<?php
 		$group_options = ['' => ''];

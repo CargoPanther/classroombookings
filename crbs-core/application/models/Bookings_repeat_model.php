@@ -50,6 +50,7 @@ class Bookings_repeat_model extends CI_Model
 		if (empty($dates)) return FALSE;
 
 		unset($data['dates']);
+		$this->db->trans_begin();
 
 		$data = $this->sleep_values($data);
 
@@ -57,7 +58,10 @@ class Bookings_repeat_model extends CI_Model
 		$data['created_by'] = $this->userauth->user->user_id;
 
 		$ins = $this->db->insert($this->table, $data);
-		if ( ! $ins) return FALSE;
+		if ( ! $ins) {
+			$this->db->trans_rollback();
+			return FALSE;
+		}
 
 		$repeat_id = $this->db->insert_id();
 
@@ -68,6 +72,7 @@ class Bookings_repeat_model extends CI_Model
 			'period_id' => element('period_id', $data, NULL),
 			'room_id' => element('room_id', $data, NULL),
 			'user_id' => element('user_id', $data, NULL),
+			'capacity' => max(1, (int) element('capacity', $data, 1)),
 			'department_id' => element('department_id', $data, NULL),
 			'date' => NULL,
 			'status' => Bookings_model::STATUS_BOOKED,
@@ -95,10 +100,22 @@ class Bookings_repeat_model extends CI_Model
 
 			// Add 'date' of instance and then create booking
 			$insert_data = array_merge($booking_data, ['date' => $date]);
-			$booking_ids[] = $this->bookings_model->create($insert_data);
+			$booking_id = $this->bookings_model->create($insert_data);
+			if ( ! $booking_id) {
+				$this->db->trans_rollback();
+				return FALSE;
+			}
+			$booking_ids[] = $booking_id;
 		}
 
-		return $repeat_id;
+		$success = $this->db->trans_status();
+		if ($success) {
+			$this->db->trans_commit();
+		} else {
+			$this->db->trans_rollback();
+		}
+
+		return $success ? $repeat_id : FALSE;
 	}
 
 

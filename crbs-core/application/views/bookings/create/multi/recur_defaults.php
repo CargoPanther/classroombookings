@@ -54,6 +54,7 @@ $cols[] = ['data' => lang('user.user'), 'width' => '17%'];
 $cols[] = ['data' => lang('booking.notes'), 'width' => '17%'];
 $cols[] = ['data' => lang('booking.start'), 'width' => '17%'];
 $cols[] = ['data' => lang('booking.end'), 'width' => '17%'];
+$cols[] = ['data' => lang('booking.capacity.form_label'), 'width' => '10%'];
 
 
 // Generate rows
@@ -256,6 +257,17 @@ foreach ($by_room as $room_id => $data) {
 		}
 		$end_col = "<div class='block-group'>{$input_block}{$append_block}</div>";
 
+		$capacity_field = sprintf('slots[%d][capacity]', $slot->mbs_id);
+		$capacity_col = form_input([
+			'name' => $capacity_field,
+			'id' => $capacity_field,
+			'type' => 'number',
+			'min' => 1,
+			'max' => max(1, (int) ($slot->room->capacity ?? 1)),
+			'step' => 1,
+			'value' => set_value($capacity_field, 1, FALSE),
+		]);
+
 
 		// Add row
 		//
@@ -267,6 +279,7 @@ foreach ($by_room as $room_id => $data) {
 		$row[] = $notes_col;
 		$row[] = $start_col;
 		$row[] = $end_col;
+		$row[] = $capacity_col;
 		$this->table->add_row($row);
 	}
 

@@ -6,7 +6,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $v_path = ROOTPATH . 'crbs-core/.version';
 if ( ! is_file($v_path)) die("Unknown classroombookings version.");
 $v = trim(file_get_contents($v_path));
-$v = preg_replace('/[^\d.-]/i', '', $v);
+$v = preg_replace('/[^0-9a-z.-]/i', '', $v);
 define('VERSION', $v);
 
 // User auth types

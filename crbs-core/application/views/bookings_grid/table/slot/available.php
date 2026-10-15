@@ -19,10 +19,23 @@ $input_value = json_encode([
 	'period_id' => $slot->period->period_id,
 	'room_id' => $slot->room->room_id,
 ]);
+$capacity_summary = '';
+if (!empty($booked_capacity)) {
+	$capacity_summary = sprintf(lang('booking.capacity.summary'), $booked_capacity, $room_capacity);
+}
+$shared_booking_classes = [];
+foreach ($bookings ?? [] as $booking) {
+	$shared_type = !empty($booking->repeat_id) ? 'recurring' : 'single';
+	$shared_booking_classes[] = 'booking-status-shared-' . $shared_type;
+}
+$class = implode(' ', array_unique(array_filter(array_merge(
+	explode(' ', $class),
+	$shared_booking_classes
+))));
 
 ?>
 
-<td class='<?= $class ?>'>
+<td class='<?= html_escape($class) ?>'>
 
 	<label
 		style="display: none"
@@ -45,12 +58,17 @@ $input_value = json_encode([
 		data-single="<?= isset($allow_single) && $allow_single ? 1 : 0 ?>"
 		data-recurring="<?= isset($allow_recur) && $allow_recur ? 1 : 0 ?>"
 		data-multi="false"
+		aria-label="<?= html_escape($capacity_summary ? $capacity_summary . '. ' . lang('booking.capacity.click') : lang('booking.create_booking')) ?>"
 		up-href="<?= $url ?>"
 		up-target=".bookings-create"
 		up-layer="new"
+		up-size="large"
 		up-cache="false"
 		up-preload
-	>&nbsp;
+	><?php if ($capacity_summary): ?>
+		<span class="bookings-grid-capacity"><?= html_escape($capacity_summary) ?></span>
+		<small class="bookings-grid-capacity-hint"><?= lang('booking.capacity.click') ?></small>
+	<?php else: ?>&nbsp;<?php endif; ?>
 	</button>
 
 </td>

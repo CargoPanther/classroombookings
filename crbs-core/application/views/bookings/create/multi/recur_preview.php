@@ -24,6 +24,8 @@ if ($conflict_count > 0) {
 	echo msgbox('notice large', $msg);
 }
 
+echo msgbox('info', lang('booking.capacity.recurring.skip_notice'), FALSE);
+
 echo $tabs->render();
 
 // Actions

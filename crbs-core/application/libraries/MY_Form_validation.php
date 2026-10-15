@@ -107,25 +107,21 @@ class MY_Form_validation extends CI_Form_validation
 		$date_ymd = $date->format('Y-m-d');
 
 		$this->CI->load->model('bookings_model');
-		$conflicts = $this->CI->bookings_model->find_conflicts([$date_ymd], $period_id, $room_id);
+		$booking = $this->CI->bookings_model->get($booking_id);
+		if ( ! $booking) return FALSE;
 
-		// No conflicts
-		if (empty($conflicts)) return TRUE;
-
-		$conflict = current($conflicts);
-
-		// Conflict is ourself: booking has not moved.
-		if ($conflict->booking_id == $booking_id) return TRUE;
-
-		// Include details in error message.
-		$booking_card_url = site_url('bookings/card/' . $conflict->booking_id);
-
-		$msg = lang('validation.no_conflict.error');
-		$view = lang('app.action.view_details');
-		$link = sprintf('%s <a href="%s" up-target=".bookings-card" up-layer="new popup" up-size="medium">%s</a>', $msg, $booking_card_url, $view);
-
-		$this->set_message('no_conflict', $link);
-		return FALSE;
+		try {
+			$this->CI->bookings_model->validate_booking([
+				'date' => $date_ymd,
+				'period_id' => $period_id,
+				'room_id' => $room_id,
+				'capacity' => $booking->capacity ?? 1,
+			], [(int) $booking_id], FALSE);
+			return TRUE;
+		} catch (\app\components\bookings\exceptions\BookingValidationException $e) {
+			$this->set_message('no_conflict', $e->getMessage());
+			return FALSE;
+		}
 	}
 
 

@@ -33,7 +33,11 @@ if ($booking->repeat_id) {
 if (booking_editable($booking)) {
 
 	if ($booking->repeat_id) {
-		$edit_choices = $this->load->view('bookings/edit_choice', ['booking' => $booking, 'params' => $params], TRUE);
+		$edit_choices = $this->load->view('bookings/edit_choice', [
+			'booking' => $booking,
+			'current_user' => $this->userauth->user,
+			'params' => $params,
+		], TRUE);
 		$links[] = [
 			'link' => '#',
 			'name' => lang('app.action.update'),
@@ -117,6 +121,14 @@ if ($booking->repeat_id) {
 	];
 }
 
+	$booking_capacity = max(1, (int) ($booking->capacity ?? 1));
+	$capacity_unit = $booking_capacity === 1 ? lang('booking.capacity.person') : lang('booking.capacity.people');
+	$info[] = [
+		'name' => 'capacity',
+		'label' => lang('booking.capacity'),
+		'value' => sprintf('%d %s', $booking_capacity, $capacity_unit),
+	];
+
 // Period
 //
 $start = date_output_time($booking->period->time_start);
@@ -191,16 +203,45 @@ echo "<div class='messages'>{$messages}</div>";
 // Booking
 //
 
-echo "<h3>" . lang('booking.booking') . "</h3>";
+echo '<section class="booking-detail-section"><h3>' . html_escape(lang('booking.booking')) . '</h3>';
 echo $links_html;
 echo "<div class='bookings-edit-choice'></div>";
 echo "<div class='bookings-cancel'></div>";
-echo $info_html;
+echo $info_html . '</section>';
+
+if (count($shared_bookings) > 1) {
+	echo '<section class="booking-shared-bookings"><h3>' . html_escape(lang('booking.capacity.shared')) . '</h3><ul>';
+	foreach ($shared_bookings as $shared_booking) {
+		$user_label = lang('booking.capacity.reserved');
+		if (booking_user_viewable($shared_booking) && !empty($shared_booking->user)) {
+			$user_label = !empty($shared_booking->user->displayname)
+				? $shared_booking->user->displayname
+				: $shared_booking->user->username;
+		}
+		$places = max(1, (int) ($shared_booking->capacity ?? 1));
+		$unit = $places === 1 ? lang('booking.capacity.person') : lang('booking.capacity.people');
+		echo '<li><strong>' . html_escape($user_label) . '</strong> <span>' . html_escape(sprintf(lang('booking.capacity.booked_by'), $places, $unit)) . '</span>';
+		if (booking_notes_viewable($shared_booking) && !empty($shared_booking->notes)) {
+			echo '<p>' . nl2br(html_escape($shared_booking->notes)) . '</p>';
+		}
+		if (booking_editable($shared_booking)) {
+			$edit_url = site_url('bookings/edit/' . $shared_booking->booking_id . '?' . http_build_query(['params' => $params]));
+			echo '<p class="booking-shared-edit-link">' . anchor($edit_url, lang('app.action.update'), [
+				'up-layer' => 'new modal',
+				'up-target' => '.bookings-edit',
+				'up-preload' => '',
+			]) . '</p>';
+		}
+		echo '</li>';
+	}
+	echo '</ul></section>';
+}
 
 // Room
 //
 
-echo '<h3>' . html_escape($booking->room->name) . '</h3>';
+echo '<section class="booking-detail-section booking-room-details"><h3>' . html_escape(lang('room.room_details')) . '</h3>';
+echo '<h4>' . html_escape($booking->room->name) . '</h4>';
 
 $photo_html = '';
 $fields_html = '';
@@ -220,3 +261,4 @@ if ($photo_url = image_url($booking->room->photo)) {
 
 echo $fields_html;
 echo $photo_html;
+echo '</section>';

@@ -11,7 +11,7 @@ $lang['exception.AgentException.forNoRoom'] = 'Requested room could not be found
 $lang['exception.AgentException.forInvalidDate'] = 'Requested date is not recognised or is not bookable.';
 $lang['exception.AgentException.forNoWeek'] = 'Requested date is not associated with a timetable week.';
 $lang['exception.AgentException.forNoBooking'] = 'Requested booking could not be found.';
-$lang['exception.AgentException.forAccessDenied'] = 'You do not have perimssion to modify the requested booking.';
+$lang['exception.AgentException.forAccessDenied'] = 'You do not have permission to modify the requested booking.';
 
 $lang['exception.AvailabilityException.forNoWeek'] = "The selected date is not assigned to a timetable week.";
 $lang['exception.AvailabilityException.forNoPeriods'] = "There are no periods available for the selected date.";
@@ -20,6 +20,7 @@ $lang['exception.AvailabilityException.forHoliday'] = 'The date you selected is 
 
 
 $lang['exception.BookingValidationException.forExistingBooking'] = "Another booking already exists.";
+$lang['exception.BookingValidationException.forCapacityExceeded'] = 'The requested number of places is not available for this room and time.';
 $lang['exception.BookingValidationException.forHoliday'] = "Booking cannot be created on a holiday.";
 
 $lang['exception.SessionException.notSelected'] = "No active Session found.";

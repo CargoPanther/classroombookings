@@ -697,6 +697,20 @@ div.g p, div.g1 p {
   display: block;
 }
 
+.bookings-grid-slot.booking-status-available.booking-status-shared-single .bookings-grid-button,
+.bookings-grid-slot.booking-status-available.booking-status-shared-recurring .bookings-grid-button {
+  display: block;
+  color: #000;
+}
+
+.bookings-grid-slot.booking-status-shared-single .bookings-grid-button {
+  background: #dceef5;
+}
+
+.bookings-grid-slot.booking-status-shared-recurring .bookings-grid-button {
+  background: #ebe8f3;
+}
+
 .bookings-grid-slot.booking-status-booked-recurring {
   background: #E68A73;
   color: #fff;

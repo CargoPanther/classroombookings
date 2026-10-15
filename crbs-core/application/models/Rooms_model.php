@@ -217,6 +217,20 @@ class Rooms_model extends CI_Model
 	}
 
 
+	public function max_occupied_capacity($room_id)
+	{
+		$sql = "SELECT COALESCE(MAX(slot_capacity), 0) AS max_occupied
+				FROM (
+					SELECT SUM(capacity) AS slot_capacity
+					FROM bookings
+					WHERE room_id = ? AND status = ?
+					GROUP BY `date`, period_id
+				) AS occupied_slots";
+		$query = $this->db->query($sql, [$room_id, 10]);
+		return (int) $query->row()->max_occupied;
+	}
+
+
 	public function update_pos($data)
 	{
 		return $this->db->update_batch($this->table, $data, 'room_id');
@@ -461,6 +475,23 @@ class Rooms_model extends CI_Model
 	function update($room_id, $data)
 	{
 		$where = ['room_id' => $room_id];
+		if (array_key_exists('capacity', $data)) {
+			$this->db->trans_begin();
+			$this->db->query('SELECT room_id FROM rooms WHERE room_id = ? FOR UPDATE', [$room_id]);
+			if ((int) $data['capacity'] < $this->max_occupied_capacity($room_id)) {
+				$this->db->trans_rollback();
+				return FALSE;
+			}
+			$updated = $this->db->update('rooms', $data, $where);
+			$success = $updated && $this->db->trans_status();
+			if ($success) {
+				$this->db->trans_commit();
+			} else {
+				$this->db->trans_rollback();
+			}
+			return $success;
+		}
+
 		return $this->db->update('rooms', $data, $where);
 	}
 

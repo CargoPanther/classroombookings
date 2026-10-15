@@ -335,6 +335,7 @@ class MultiAgent extends BaseAgent
 			['field' => 'room_id', 'label' => 'lang:room.room', 'rules' => 'required|integer'],
 			['field' => 'department_id', 'label' => 'lang:department.department', 'rules' => 'integer'],
 			['field' => 'user_id', 'label' => 'lang:user.user', 'rules' => 'integer'],
+			['field' => 'capacity', 'label' => 'lang:booking.capacity', 'rules' => 'required|integer|greater_than[0]'],
 			['field' => 'notes', 'label' => 'lang:booking.notes', 'rules' => 'max_length[255]'],
 		];
 
@@ -383,8 +384,13 @@ class MultiAgent extends BaseAgent
 				'room_id' => $slot_data->room_id,
 				'department_id' => !empty($department_id) ? $department_id : null,
 				'user_id' => !empty($user_id) ? $user_id : null,
+				'capacity' => filter_var($form_slot['capacity'] ?? 1, FILTER_VALIDATE_INT),
 				'notes' => !empty($form_slot['notes']) ? $form_slot['notes'] : null,
 			];
+			if ($booking_data['capacity'] === FALSE || $booking_data['capacity'] > max(1, (int) ($slot_data->remaining_capacity ?? $slot_data->room->capacity ?? 1))) {
+				$this->message = lang('booking.capacity.invalid');
+				return FALSE;
+			}
 
 			$this->CI->form_validation->reset_validation();
 			$this->CI->form_validation->set_rules($rules);
@@ -420,7 +426,14 @@ class MultiAgent extends BaseAgent
 		$this->CI->db->trans_start();
 
 		foreach ($rows as $row) {
-			$booking_ids[] = $this->CI->bookings_model->create($row);
+			$booking_id = $this->CI->bookings_model->create($row);
+			if ( ! $booking_id) {
+				$this->CI->db->trans_rollback();
+				$this->success = false;
+				$this->message = $this->CI->bookings_model->get_error() ?: lang('booking.error.generic');
+				return false;
+			}
+			$booking_ids[] = $booking_id;
 		}
 
 		$this->CI->db->trans_complete();
@@ -468,6 +481,7 @@ class MultiAgent extends BaseAgent
 			['field' => 'room_id', 'label' => 'lang:room.room', 'rules' => 'required|integer'],
 			['field' => 'department_id', 'label' => 'lang:department.department', 'rules' => 'integer'],
 			['field' => 'user_id', 'label' => 'lang:user.user', 'rules' => 'integer'],
+			['field' => 'capacity', 'label' => 'lang:booking.capacity', 'rules' => 'required|integer|greater_than[0]'],
 			['field' => 'notes', 'label' => 'lang:booking.notes', 'rules' => 'max_length[255]'],
 			['field' => 'recurring_start', 'label' => 'lang:booking.recur_start', 'rules' => 'required|valid_date'],
 			['field' => 'recurring_end', 'label' => 'lang:booking.recur_end', 'rules' => 'required|valid_date'],
@@ -518,7 +532,7 @@ class MultiAgent extends BaseAgent
 			$room_id = $slot->room_id;
 
 			$department_id = null;
-			if (has_permission(Permission::BK_RECUR_CREATE, $room_id)) {
+			if (has_permission(Permission::BK_RECUR_SET_DEPT, $room_id)) {
 				if (isset($form_slot['department_id'])) {
 					$department_id = $form_slot['department_id'];
 				}
@@ -543,10 +557,15 @@ class MultiAgent extends BaseAgent
 				'room_id' => $slot->room_id,
 				'department_id' => $department_id,
 				'user_id' => $user_id,
+				'capacity' => filter_var($form_slot['capacity'] ?? 1, FILTER_VALIDATE_INT),
 				'notes' => !empty($form_slot['notes']) ? $form_slot['notes'] : NULL,
 				'recurring_start' => $recurring_start,
 				'recurring_end' => $recurring_end,
 			];
+			if ($booking_data['capacity'] === FALSE || $booking_data['capacity'] > max(1, (int) ($slot->room->capacity ?? 1))) {
+				$this->message = lang('booking.capacity.invalid');
+				return FALSE;
+			}
 
 			$this->CI->form_validation->reset_validation();
 			$this->CI->form_validation->set_rules($rules);
@@ -620,29 +639,52 @@ class MultiAgent extends BaseAgent
 				$instances[$key]['datetime'] = $row->date;
 			}
 
-			// Find conflicts for this booking
-			$existing_bookings = $this->CI->bookings_model->find_conflicts($dates, $slot->period_id, $slot->room_id);
+			$existing_bookings = $this->CI->bookings_model->find_all_for_dates($dates, $slot->period_id, $slot->room_id);
 
 			$num_bookable = 0;
+			$requested_capacity = max(1, (int) ($data['capacity'] ?? 1));
+			$room_capacity = max(1, (int) ($slot->room->capacity ?? 1));
+			$target_user_id = (int) ($data['user_id'] ?? $this->user->user_id);
+			$slot->requested_capacity = $requested_capacity;
 
 			// Update 'instances' data with the options for each one
 			foreach ($instances as $key => $instance) {
 
+				$bookings = $existing_bookings[$key] ?? [];
+				$booked_capacity = array_sum(array_map(
+					fn($booking) => max(1, (int) ($booking->capacity ?? 1)),
+					$bookings
+				));
+				$remaining_capacity = max(0, $room_capacity - $booked_capacity);
+				$duplicate_user = false;
+				foreach ($bookings as $booking) {
+					$existing_user_id = (int) ($booking->user_id ?? $booking->created_by ?? 0);
+					if ($existing_user_id === $target_user_id) {
+						$duplicate_user = true;
+						break;
+					}
+				}
+				$can_book = !$duplicate_user && $remaining_capacity >= $requested_capacity;
 				$actions = [];
-
-				if (array_key_exists($key, $existing_bookings)) {
-					$actions = $this->get_actions($existing_bookings[$key]);
-					// $actions['do_not_book'] = 'Keep existing booking';
-					// $actions['replace'] = 'Replace existing booking';
-					$instances[$key]['booking'] = $existing_bookings[$key];
-					$slot->conflict_count++;
-					$conflict_count++;
-				} else {
+				if ($can_book) {
 					$actions['book'] = lang('booking.book');
 					$actions['do_not_book'] = lang('booking.do_not_book');
 					$num_bookable++;
+				} else {
+					$actions = (count($bookings) === 1)
+						? $this->get_actions($bookings[0])
+						: ['do_not_book' => lang('booking.action.keep')];
+					$slot->conflict_count++;
+					$conflict_count++;
 				}
 
+				$instances[$key]['bookings'] = $bookings;
+				$instances[$key]['booking'] = $bookings[0] ?? null;
+				$instances[$key]['booked_capacity'] = $booked_capacity;
+				$instances[$key]['remaining_capacity'] = $remaining_capacity;
+				$instances[$key]['room_capacity'] = $room_capacity;
+				$instances[$key]['can_book'] = $can_book;
+				$instances[$key]['duplicate_user'] = $duplicate_user;
 				$instances[$key]['actions'] = $actions;
 			}
 
@@ -704,6 +746,8 @@ class MultiAgent extends BaseAgent
 		$max_instances = $user_constraints['recur_max_instances'];
 
 		$this->CI->db->trans_begin();
+		$total_created = 0;
+		$total_capacity_skips = 0;
 
 		foreach ($multibooking->slots as $slot) {
 
@@ -715,17 +759,91 @@ class MultiAgent extends BaseAgent
 			if ( ! isset($dates[$mbs_id])) continue;
 			$slot_dates = $dates[$mbs_id];
 			if (empty($slot_dates)) continue;
+			if (!is_array($slot_dates)) continue;
+
+			$capacity = filter_var($slot_data['capacity'] ?? 1, FILTER_VALIDATE_INT);
+			$room_capacity = max(1, (int) ($slot->room->capacity ?? 1));
+			if ($capacity === FALSE || $capacity < 1 || $capacity > $room_capacity) {
+				$this->CI->db->trans_rollback();
+				$this->message = lang('booking.capacity.invalid');
+				return FALSE;
+			}
+
+			$valid_dates = [];
+			foreach ($slot->recurring_dates as $date_row) {
+				$valid_dates[$date_row->date->format('Y-m-d')] = true;
+			}
+			foreach ($slot_dates as $date => &$info) {
+				if (!isset($valid_dates[$date]) || !is_array($info) || !in_array($info['action'] ?? '', ['book', 'replace', 'do_not_book'], true)) {
+					$info = ['action' => 'do_not_book'];
+				}
+			}
+			unset($info);
+
+			$dates_to_check = [];
+			foreach ($slot_dates as $date => $info) {
+				if (in_array($info['action'] ?? '', ['book', 'replace'], true) && isset($valid_dates[$date])) {
+					$dates_to_check[] = $date;
+				}
+			}
+			$existing_by_date = $this->CI->bookings_model->find_all_for_dates($dates_to_check, $slot->period_id, $slot->room_id);
+			$target_user_id = (int) (!empty($slot_data['user_id']) ? $slot_data['user_id'] : $this->user->user_id);
+			$capacity_skips = 0;
+			$created_for_series = 0;
+			foreach ($slot_dates as $date => &$info) {
+				$action = $info['action'] ?? 'do_not_book';
+				if (!in_array($action, ['book', 'replace'], true)) continue;
+				$key = Slot::generate_key($date, $slot->period_id, $slot->room_id);
+				$bookings = $existing_by_date[$key] ?? [];
+				$excluded_booking_id = null;
+				if ($action === 'replace') {
+					$replace_id = (int) ($info['replace_booking_id'] ?? 0);
+					foreach ($bookings as $booking) {
+						if ((int) $booking->booking_id !== $replace_id) continue;
+						$replace_actions = $this->get_actions($booking);
+						if (isset($replace_actions['replace'])) $excluded_booking_id = $replace_id;
+						break;
+					}
+					if (!$excluded_booking_id) {
+						$info['action'] = 'do_not_book';
+						$capacity_skips++;
+						continue;
+					}
+				}
+
+				$remaining_capacity = $room_capacity;
+				$duplicate_user = false;
+				foreach ($bookings as $booking) {
+					if ((int) $booking->booking_id === $excluded_booking_id) continue;
+					$remaining_capacity -= max(1, (int) ($booking->capacity ?? 1));
+					$existing_user_id = (int) ($booking->user_id ?? $booking->created_by ?? 0);
+					if ($existing_user_id === $target_user_id) $duplicate_user = true;
+				}
+				if ($remaining_capacity < $capacity || $duplicate_user) {
+					$info['action'] = 'do_not_book';
+					$capacity_skips++;
+				}
+			}
+			unset($info);
 
 			if ( ! is_null($max_instances)) {
 				$i = 0;
 				foreach ($slot_dates as $date => &$info) {
-					if ($info['action'] !== 'book') continue;
+					if (!in_array($info['action'] ?? '', ['book', 'replace'], true)) continue;
 					$i++;
 					if ($i > $max_instances) {
 						// Ensure we do not book once we have reached the constraint's max instances
 						$info['action'] = 'do_not_book';
 					}
 				}
+				unset($info);
+			}
+			foreach ($slot_dates as $info) {
+				if (in_array($info['action'] ?? '', ['book', 'replace'], true)) $created_for_series++;
+			}
+			if ($created_for_series === 0) {
+				$total_capacity_skips += $capacity_skips;
+				continue;
 			}
 
 			$repeat_data = [
@@ -738,6 +856,7 @@ class MultiAgent extends BaseAgent
 				'weekday' => $slot->weekday,
 				'status' => Bookings_model::STATUS_BOOKED,
 				'notes' => !empty($slot_data['notes']) ? $slot_data['notes'] : NULL,
+				'capacity' => $capacity,
 				'dates' => $slot_dates,
 			];
 
@@ -751,6 +870,13 @@ class MultiAgent extends BaseAgent
 			}
 
 			$repeat_ids[] = $repeat_id;
+			$total_created += $created_for_series;
+			$total_capacity_skips += $capacity_skips;
+		}
+		if (empty($repeat_ids)) {
+			$this->CI->db->trans_rollback();
+			$this->message = lang('booking.capacity.recurring.none');
+			return FALSE;
 		}
 
 		if ($this->CI->db->trans_status() === FALSE) {
@@ -762,8 +888,9 @@ class MultiAgent extends BaseAgent
 		$this->CI->db->trans_commit();
 
 		$this->success = TRUE;
-		$line = lang('booking.success.recurring.some_created');
-		$this->message = sprintf($line, count($repeat_ids));
+		$this->message = ($total_capacity_skips > 0)
+			? sprintf(lang('booking.success.recurring.multi.shared'), $total_created, $total_capacity_skips)
+			: sprintf(lang('booking.success.recurring.multi.created'), $total_created);
 		return TRUE;
 	}
 
