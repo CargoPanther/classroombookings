@@ -249,27 +249,55 @@ input:disabled {
   opacity: 0.6;
 }
 
-.msgbox {
-  position: relative;
-  background-image: none !important;
+div.msgbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  width: fit-content;
+  min-height: 0;
+  padding: 10px 12px;
   border-radius: 8px;
+  background-image: none !important;
+  font-size: inherit;
+  line-height: 1.45;
 }
 
-.msgbox .msgbox-icon {
-  position: absolute;
-  left: 7px;
-  top: 6px;
+div.msgbox.large {
+  width: 100%;
+  padding: 10px 12px;
 }
 
-.msgbox.error,
-.msgbox.exclamation {
-  color: #7f1d1d;
+div.msgbox .msgbox-icon {
+  position: static;
+  display: block;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
 }
 
-.msgbox.info,
-.msgbox.question,
-.msgbox.notice {
-  color: #1e4c66;
+div.msgbox .msgbox-content {
+  min-width: 0;
+}
+
+div.msgbox.error {
+  border-color: #efc2bd;
+  color: #8f2924;
+  background-color: #fff4f2;
+}
+
+div.msgbox.exclamation {
+  border-color: #efd7a1;
+  color: #805600;
+  background-color: #fff8e8;
+}
+
+div.msgbox.info,
+div.msgbox.question,
+div.msgbox.notice {
+  border-color: #c7e1ed;
+  color: #28516a;
+  background-color: var(--ui-primary-soft);
 }
 
 .setup-menu .setup-menu-heading {

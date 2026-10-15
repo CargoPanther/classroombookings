@@ -217,7 +217,7 @@ function msgbox($type = 'error', $content = '', $escape = TRUE)
 		? 'alert'
 		: 'info';
 	$icon = ui_icon($icon, ['class' => 'ui-icon msgbox-icon', 'width' => '16', 'height' => '16']);
-	$html = "<div class='msgbox {$type}'>{$icon}{$content}</div>";
+	$html = "<div class='msgbox {$type}'>{$icon}<span class='msgbox-content'>{$content}</span></div>";
 	return $html;
 }
 
