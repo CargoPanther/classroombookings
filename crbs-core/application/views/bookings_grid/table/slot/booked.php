@@ -2,6 +2,16 @@
 
 $template = "{user}{notes}{actions}";
 
+// Fully booked shared slots use the shared-booking colours
+if (count($bookings ?? []) > 1) {
+	$shared_classes = [];
+	foreach ($bookings as $shared_booking) {
+		$shared_classes[] = 'booking-status-shared-' . (!empty($shared_booking->repeat_id) ? 'recurring' : 'single');
+	}
+	$class = trim(str_replace(['booking-status-booked-single', 'booking-status-booked-recurring'], '', $class))
+		. ' ' . implode(' ', array_unique($shared_classes));
+}
+
 $vars = [
 	'{user}' => '',
 	'{notes}' => '',
@@ -10,7 +20,10 @@ $vars = [
 
 $actions = [];
 
-if ($show_user && ! empty($booking->user)) {
+if (count($bookings ?? []) > 1) {
+	$vars['{user}'] = '<div class="booking-cell-user">' . html_escape(sprintf(lang('booking.capacity.multiple'), count($bookings))) . '</div>'
+		. '<div class="booking-cell-notes">' . html_escape(sprintf(lang('booking.capacity.summary'), $booked_capacity, $room_capacity)) . '</div>';
+} elseif ($show_user && ! empty($booking->user)) {
 
 	$user_label = !empty($booking->user->displayname)
 		? $booking->user->displayname
@@ -22,7 +35,7 @@ if ($show_user && ! empty($booking->user)) {
 
 // Notes
 //
-if ($show_notes && !empty($booking->notes)) {
+if (count($bookings ?? []) <= 1 && $show_notes && !empty($booking->notes)) {
 	$notes = html_escape($booking->notes);
 	$tooltip = '';
 	if (strlen($notes) > 15) {
@@ -51,6 +64,16 @@ $params = ['params' => http_build_query($context->get_query_params()) ];
 $uri = sprintf('bookings/view/%d?%s', $booking->booking_id, http_build_query($params));
 $url = site_url($uri);
 
+// All booked slots open the shared slot layout; fall back to the view page without a slot
+$use_shared_layout = !empty($slot);
+if ($use_shared_layout) {
+	$url = site_url('bookings/create/single?' . http_build_query([
+		'date' => $slot->date->date,
+		'period_id' => $slot->period->period_id,
+		'room_id' => $slot->room->room_id,
+		'params' => $params['params'],
+	]));
+}
 // For checkbox
 //
 $input_name = sprintf('bookings[]');
@@ -59,7 +82,7 @@ $input_value = $booking->booking_id;
 
 // Deletable
 //
-$is_deletable = booking_cancelable($booking);
+$is_deletable = count($bookings ?? []) <= 1 && booking_cancelable($booking);
 
 ?>
 
@@ -99,12 +122,15 @@ $is_deletable = booking_cancelable($booking);
 
 	$link_attrs = [
 		'class' => $cls,
-		'up-target' => ".bookings-view",
+		'up-target' => $use_shared_layout ? '.bookings-create' : '.bookings-view',
 		'up-layer' => "new modal",
 		'up-size' => "large",
 		'up-history' => "false",
 		'up-preload' => '',
 	];
+	if ($use_shared_layout) {
+		$link_attrs['up-cache'] = 'false';
+	}
 
 	if ($is_deletable) {
 		$link_attrs['data-multi'] = "false";

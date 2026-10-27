@@ -139,9 +139,16 @@ class SingleAgent extends BaseAgent
 		}
 		if (!empty($owned_bookings) || $remaining_capacity < 1) {
 			$this->booking_type = self::BOOK_SINGLE;
-			$this->title = !empty($owned_bookings)
-				? lang('booking.capacity.owned_title')
-				: lang('booking.capacity.full_title');
+		}
+		if (!empty($existing_bookings)) {
+			$this->title = date_output_long($this->datetime);
+			$this->title_html = sprintf(
+				'<div>%s</div><div>%s %s</div><div>%s</div>',
+				html_escape(date_output_long($this->datetime)),
+				week_dot($this->week, 'sm'),
+				html_escape($this->week->name),
+				html_escape(sprintf('%s (%s - %s)', $this->period->name, date_output_time($this->period->time_start), date_output_time($this->period->time_end)))
+			);
 		}
 
 
@@ -158,7 +165,9 @@ class SingleAgent extends BaseAgent
 				// The constraints that are checked here are only applicable to single bookings
 				$this->check_constraints();
 
-				$this->permit_booking = $can_book_single && $this->constraint_applied === false && $remaining_capacity > 0 && empty($owned_bookings);
+				$can_set_user_perm = has_permission(Permission::BK_SGL_SET_USER, $this->room->room_id);
+				$this->permit_booking = $can_book_single && $this->constraint_applied === false && $remaining_capacity > 0 && (empty($owned_bookings) || $can_set_user_perm);
+				$this->view_data['admin_add_for_other'] = $this->permit_booking && !empty($owned_bookings);
 				$this->subview = 'bookings/create/single/single_form';
 				// Check permissions to load other lists
 				if ($this->permit_booking) {
@@ -334,8 +343,16 @@ class SingleAgent extends BaseAgent
 	 */
 	private function create_single_booking()
 	{
+		$target_user_id = (int) $this->user->user_id;
+		if (has_permission(Permission::BK_SGL_SET_USER, $this->room->room_id)) {
+			$target_user_id = (int) $this->CI->input->post('user_id');
+		}
+		if (!empty($this->view_data['admin_add_for_other']) && $target_user_id === 0) {
+			$this->message = lang('booking.add.for_other_user.required');
+			return FALSE;
+		}
 		foreach ($this->view_data['existing_bookings'] as $existing_booking) {
-			if ((int) ($existing_booking->user_id ?? 0) === (int) $this->user->user_id) {
+			if ((int) ($existing_booking->user_id ?? 0) === (int) $this->user->user_id && $target_user_id === (int) $this->user->user_id) {
 				$this->message = lang('booking.capacity.owned_slot');
 				return FALSE;
 			}

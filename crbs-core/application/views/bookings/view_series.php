@@ -19,14 +19,25 @@ $info = [];
 $params = $this->input->get('params');
 
 if ($booking->repeat_id) {
-	$uri = sprintf('bookings/view/%d?%s', $booking->booking_id, http_build_query(['params' => $params]));
+	if ($this->input->get('shared_slot')) {
+		$uri = 'bookings/create/single?' . http_build_query([
+			'date' => $booking->date->format('Y-m-d'),
+			'period_id' => $booking->period_id,
+			'room_id' => $booking->room_id,
+			'params' => $params,
+		]);
+		$back_target = '.bookings-create';
+	} else {
+		$uri = sprintf('bookings/view/%d?%s', $booking->booking_id, http_build_query(['params' => $params]));
+		$back_target = '.bookings-view';
+	}
 
 	$links[] = [
 		'link' => $uri,
 		'name' => lang('booking.series.go_back'),
 		'icon' => 'arrow_turn_left.png',
 		'attrs' => [
-			'up-target' => '.bookings-view',
+			'up-target' => $back_target,
 			'up-history' => 'false',
 		],
 	];

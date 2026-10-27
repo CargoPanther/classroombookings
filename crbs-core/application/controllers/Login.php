@@ -178,7 +178,9 @@ class Login extends MY_Controller
 			}
 			redirect($uri);
 		} else {
-			$this->data['error'] = msgbox('error', lang('auth.bad_credentials'));
+			$this->data['error'] = '<div class="action-notification-source" hidden>'
+				. msgbox('error', lang('auth.bad_credentials'))
+				. '</div>';
 			return false;
 		}
 	}

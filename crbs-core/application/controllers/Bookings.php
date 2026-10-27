@@ -227,7 +227,7 @@ class Bookings extends MY_Controller
 
 		$this->data['title'] = lang('booking.bookings_in_series');
 		$this->data['showtitle'] = '';
-		$this->data['body'] = '<div class="bookings-view">' . $body . '</div>';
+		$this->data['body'] = '<div class="bookings-view' . ($this->input->get('shared_slot') ? ' bookings-create' : '') . '">' . $body . '</div>';
 
 		return $this->render();
 	}
@@ -290,6 +290,7 @@ class Bookings extends MY_Controller
 		if ($agent->title) {
 			$this->data['title'] = $agent->title;
 		}
+		$this->data['title_html'] = $agent->title_html;
 
 		$this->data['body'] = $this->load->view('bookings/create', $this->data, TRUE);
 

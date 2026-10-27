@@ -160,6 +160,7 @@ class Rooms extends MY_Controller
 		$this->form_validation->set_rules('capacity', 'lang:room.field.capacity', 'required|integer|greater_than[0]|callback_capacity_fits_existing_bookings');
 		$this->form_validation->set_rules('user_id', 'lang:room.field.user_id', 'integer');
 		$this->form_validation->set_rules('location', 'lang:room.field.location', 'max_length[40]');
+		$this->form_validation->set_rules('door_code', 'lang:room.field.door_code', 'max_length[50]');
 		$this->form_validation->set_rules('notes', 'lang:room.field.notes', 'max_length[255]');
 		$this->form_validation->set_rules('bookable', 'lang:room.field.bookable', 'integer');
 
@@ -172,6 +173,7 @@ class Rooms extends MY_Controller
 			'capacity' => (int) $this->input->post('capacity'),
 			'user_id' => $this->input->post('user_id') ?: null,
 			'location' => $this->input->post('location'),
+			'door_code' => trim((string) $this->input->post('door_code')) ?: null,
 			'notes' => $this->input->post('notes'),
 			'bookable' => $this->input->post('bookable'),
 			'room_group_id' => $this->input->post('room_group_id'),

@@ -28,6 +28,9 @@ abstract class BaseAgent
 	// Page title to show
 	protected $title = '';
 
+	// Optional HTML replacement for the title heading
+	protected $title_html = '';
+
 	// Status success/error message
 	protected $message = '';
 

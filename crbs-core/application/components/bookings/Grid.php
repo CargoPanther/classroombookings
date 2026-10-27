@@ -213,16 +213,16 @@ class Grid
 		$class = 'bookings-grid-slot booking-status-available';
 		$cells[] = "<td class='{$class}' align='center'><span class='bookings-grid-button'>{$label}</span></td>";
 
-		$label = html_escape(lang('booking.legend.static'));
-		$class = 'bookings-grid-slot booking-status-booked booking-status-booked-recurring';
-		$cells[] = "<td class='{$class}' align='center'><span class='bookings-grid-button'>{$label}</span></td>";
-
 		$label = html_escape(lang('booking.legend.staff'));
 		$class = 'bookings-grid-slot booking-status-booked booking-status-booked-single';
 		$cells[] = "<td class='{$class}' align='center'><span class='bookings-grid-button'>{$label}</span></td>";
 
 		$label = html_escape(lang('booking.legend.shared_single'));
 		$class = 'bookings-grid-slot booking-status-available booking-status-shared-single';
+		$cells[] = "<td class='{$class}' align='center'><span class='bookings-grid-button'>{$label}</span></td>";
+
+		$label = html_escape(lang('booking.legend.static'));
+		$class = 'bookings-grid-slot booking-status-booked booking-status-booked-recurring';
 		$cells[] = "<td class='{$class}' align='center'><span class='bookings-grid-button'>{$label}</span></td>";
 
 		$label = html_escape(lang('booking.legend.shared_recurring'));

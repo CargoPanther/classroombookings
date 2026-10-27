@@ -42,7 +42,7 @@ echo "<br>";
 
 //
 
-if ($message && empty($booking_slot_notice)) {
+if ($message && (empty($booking_slot_notice) || !empty($admin_add_for_other))) {
 	echo msgbox('error large', $message);
 }
 

@@ -31,6 +31,9 @@
 }
 
 body {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
   background: var(--ui-page-bg);
   color: var(--ui-text);
   font-size: 14px;
@@ -39,6 +42,12 @@ body {
 
 .outer {
   width: min(1200px, calc(100% - 32px));
+}
+
+.outer[up-main] {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
 }
 
 .header {
@@ -97,26 +106,41 @@ body {
   align-items: center;
   gap: 7px;
   margin: 0;
-  padding: 7px 10px;
-  border: 0;
-  border-radius: 8px;
-  color: var(--ui-text);
-  background: transparent;
+  padding: 8px 14px;
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  color: var(--ui-primary-dark);
+  background: var(--ui-surface);
+  font: inherit;
   font-weight: 600;
+  line-height: 20px;
   text-decoration: none;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
 .header-meta .header-logout-button:hover,
 .header-meta .header-logout-button:focus-visible {
+  border-color: var(--ui-primary);
   background: var(--ui-primary-soft);
-  color: var(--ui-primary-dark);
+  color: var(--ui-primary);
+}
+
+.header-meta .header-logout-button .ui-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .content_area {
+  flex: 1 0 auto;
   margin-top: 24px;
   max-width: 100%;
   min-width: 0;
   overflow-x: auto;
+}
+
+.outer[up-main] > .footer {
+  margin-top: auto;
 }
 
 .login-card {
@@ -316,6 +340,33 @@ a.button:hover,
 a.button:focus-visible {
   border-color: var(--ui-primary);
   color: var(--ui-primary-dark);
+  background: var(--ui-primary-soft);
+}
+
+.booking-admin-add > summary {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 36px;
+  margin-bottom: 12px;
+  padding: 7px 14px;
+  border: 1px solid var(--ui-border);
+  border-radius: 7px;
+  color: var(--ui-primary-dark);
+  background: var(--ui-surface);
+  font-weight: 600;
+  line-height: 20px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.booking-admin-add > summary::-webkit-details-marker {
+  display: none;
+}
+
+.booking-admin-add > summary:hover,
+.booking-admin-add > summary:focus-visible {
+  border-color: var(--ui-primary);
   background: var(--ui-primary-soft);
 }
 
@@ -681,6 +732,16 @@ div.msgbox.notice {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
 }
 
+@media (min-width: 900px) {
+  .booking-create-single .booking-shared-layout {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+
+  .booking-create-single .booking-shared-layout:not(:has(.booking-shared-form)) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .booking-create-single .booking-shared-list {
   display: grid;
   gap: 12px;
@@ -830,6 +891,10 @@ up-modal-box:has(.booking-detail-section) {
   overflow: visible;
 }
 
+up-modal-box:has(.booking-shared-layout) {
+  max-width: min(1200px, 96vw) !important;
+}
+
 .bookings-create .booking-shared-layout {
   margin: 0;
 }
@@ -915,6 +980,66 @@ up-modal-box:has(.booking-detail-section) {
   width: 100%;
   max-width: 420px;
   height: auto;
+  border-radius: 8px;
+}
+
+.room-info .booking-room-details .zebra-table {
+  margin-bottom: 12px;
+}
+
+.booking-room-details .room-photo {
+  margin-top: 12px;
+}
+
+.door-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.door-code-value {
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: 0.08em;
+}
+
+.door-code-mask {
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  letter-spacing: 0.15em;
+}
+
+.door-code [hidden] {
+  display: none;
+}
+
+.door-code-toggle {
+  padding: 2px 10px;
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  color: var(--ui-primary-dark);
+  background: var(--ui-surface);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.door-code-toggle:hover,
+.door-code-toggle:focus-visible {
+  border-color: var(--ui-primary);
+  background: var(--ui-primary-soft);
+}
+
+.room-info .booking-room-details .room-photo {
+  max-width: 420px;
+}
+
+.room-info .booking-room-details .room-photo img {
   border-radius: 8px;
 }
 
@@ -1206,6 +1331,7 @@ table td > a[title="Delete"]:focus-visible {
 }
 
 .bookings-grid-slot.booking-status-available.booking-status-shared-single .bookings-grid-button,
+.bookings-grid-slot.booking-status-booked.booking-status-shared-single .bookings-grid-button,
 .bookings-grid.is-legend .booking-status-shared-single .bookings-grid-button {
   border-color: #8bbbd0;
   background: #e5f2f7;
@@ -1213,13 +1339,15 @@ table td > a[title="Delete"]:focus-visible {
 }
 
 .bookings-grid-slot.booking-status-available.booking-status-shared-recurring .bookings-grid-button,
+.bookings-grid-slot.booking-status-booked.booking-status-shared-recurring .bookings-grid-button,
 .bookings-grid.is-legend .booking-status-shared-recurring .bookings-grid-button {
   border-color: #b7add2;
   background: #efecf6;
   color: #514677;
 }
 
-.bookings-grid-slot.booking-status-available.booking-status-shared-single.booking-status-shared-recurring .bookings-grid-button {
+.bookings-grid-slot.booking-status-available.booking-status-shared-single.booking-status-shared-recurring .bookings-grid-button,
+.bookings-grid-slot.booking-status-booked.booking-status-shared-single.booking-status-shared-recurring .bookings-grid-button {
   border-color: #aa9abf;
   background: linear-gradient(135deg, #e5f2f7 0 50%, #efecf6 50% 100%);
   color: #3d4568;
@@ -1266,6 +1394,11 @@ table td > a[title="Delete"]:focus-visible {
   vertical-align: middle;
 }
 
+.filter-button .dot-week {
+  margin-left: 3px;
+  vertical-align: middle;
+}
+
 .session-calendar {
   overflow: hidden;
   border: 1px solid var(--ui-border);
@@ -1298,10 +1431,24 @@ table td > a[title="Delete"]:focus-visible {
   border-radius: 999px;
 }
 
+.session-calendar .date-cell-content:disabled {
+  opacity: 1;
+}
+
 .session-calendar .date-btn,
 .session-calendar .date-link {
   border-radius: 999px;
-  color: var(--ui-text);
+  color: inherit;
+}
+
+.session-calendar.mode-config .date-btn {
+  border-color: transparent;
+  background: transparent;
+}
+
+.session-calendar .date-cell.prev-month .date-link,
+.session-calendar .date-cell.next-month .date-link {
+  color: var(--ui-muted);
 }
 
 .session-calendar .date-btn:hover,
@@ -1460,6 +1607,34 @@ table td > a[title="Delete"]:focus-visible {
   background: var(--ui-primary-soft);
 }
 
+.theme-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+}
+
+.theme-controls .theme-toggle {
+  margin-left: 0;
+}
+
+.theme-select-label {
+  color: var(--ui-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.theme-select {
+  min-height: 34px;
+  padding: 5px 26px 5px 9px;
+  border-color: var(--ui-border);
+  border-radius: 7px;
+  color: var(--ui-text);
+  background-color: var(--ui-surface);
+  font: inherit;
+  font-size: 12px;
+}
+
 [data-theme="dark"] {
   color-scheme: dark;
   --ui-primary: #20834b;
@@ -1490,6 +1665,80 @@ table td > a[title="Delete"]:focus-visible {
   --ui-warning-text: #f5d995;
   --ui-warning-bg: #382f1e;
   --ui-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme-variant="neutral"] {
+  --ui-primary: #4b9bd8;
+  --ui-primary-dark: #8fc7f0;
+  --ui-primary-soft: #263746;
+  --ui-accent: #e6a76b;
+  --ui-text: #e5e7eb;
+  --ui-muted: #a7afb9;
+  --ui-border: #3b4149;
+  --ui-surface: #17191d;
+  --ui-surface-muted: #202329;
+  --ui-page-bg: #101114;
+  --ui-control-bg: #24272d;
+  --ui-control-hover: #30343c;
+  --ui-control-border: #454b54;
+  --ui-input-border: #454b54;
+  --ui-focus-ring: rgba(143, 199, 240, 0.38);
+  --ui-table-row: #202329;
+  --ui-table-alt-row: #17191d;
+  --ui-table-heading: #2a2e35;
+  --ui-info-border: #3c617b;
+  --ui-info-text: #c9e6f8;
+  --ui-info-bg: #263746;
+  --ui-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme-variant="neutral"] .bookings-grid-slot.booking-status-booked-single .bookings-grid-button {
+  border-color: #3474a5;
+  background: #285d85;
+  color: #f2f7fb;
+}
+
+[data-theme-variant="neutral"] .bookings-grid-slot.booking-status-available.booking-status-shared-single .bookings-grid-button,
+[data-theme-variant="neutral"] .bookings-grid-slot.booking-status-booked.booking-status-shared-single .bookings-grid-button,
+[data-theme-variant="neutral"] .bookings-grid.is-legend .booking-status-shared-single .bookings-grid-button {
+  border-color: #496d82;
+  background: #263b49;
+  color: #d7eaf5;
+}
+
+[data-theme-variant="neutral"] .bookings-grid-slot.booking-status-available.booking-status-shared-recurring .bookings-grid-button,
+[data-theme-variant="neutral"] .bookings-grid-slot.booking-status-booked.booking-status-shared-recurring .bookings-grid-button,
+[data-theme-variant="neutral"] .bookings-grid.is-legend .booking-status-shared-recurring .bookings-grid-button {
+  border-color: #625a78;
+  background: #302d3b;
+  color: #e3dcf4;
+}
+
+[data-theme-variant="neutral"] .bookings-grid-slot.booking-status-available.booking-status-shared-single.booking-status-shared-recurring .bookings-grid-button,
+[data-theme-variant="neutral"] .bookings-grid-slot.booking-status-booked.booking-status-shared-single.booking-status-shared-recurring .bookings-grid-button {
+  border-color: #5a6674;
+  background: linear-gradient(135deg, #263b49 0 50%, #302d3b 50% 100%);
+  color: #e3e7ed;
+}
+
+[data-theme-variant="neutral"] .bookings-grid-slot.booking-status-booked-recurring .bookings-grid-button {
+  border-color: #625a78;
+  background: #514a63;
+  color: #f5f2fb;
+}
+
+[data-theme-variant="neutral"] .bookings-grid-header.has-week {
+  background-color: #292d34 !important;
+  color: var(--ui-text) !important;
+}
+
+[data-theme-variant="neutral"] .bookings-grid-header.has-week a {
+  color: var(--ui-primary-dark) !important;
+}
+
+[data-theme-variant="neutral"] .session-calendar .date-link.is-selected span {
+  background: var(--ui-primary);
+  color: #101114;
 }
 
 [data-theme="dark"] body {
@@ -1632,6 +1881,7 @@ table td > a[title="Delete"]:focus-visible {
 }
 
 [data-theme="dark"] .bookings-grid-slot.booking-status-available.booking-status-shared-single .bookings-grid-button,
+[data-theme="dark"] .bookings-grid-slot.booking-status-booked.booking-status-shared-single .bookings-grid-button,
 [data-theme="dark"] .bookings-grid.is-legend .booking-status-shared-single .bookings-grid-button {
   border-color: #39744e;
   background: #234232;
@@ -1639,13 +1889,15 @@ table td > a[title="Delete"]:focus-visible {
 }
 
 [data-theme="dark"] .bookings-grid-slot.booking-status-available.booking-status-shared-recurring .bookings-grid-button,
+[data-theme="dark"] .bookings-grid-slot.booking-status-booked.booking-status-shared-recurring .bookings-grid-button,
 [data-theme="dark"] .bookings-grid.is-legend .booking-status-shared-recurring .bookings-grid-button {
   border-color: #655b82;
   background: #38334a;
   color: #e1d9f5;
 }
 
-[data-theme="dark"] .bookings-grid-slot.booking-status-available.booking-status-shared-single.booking-status-shared-recurring .bookings-grid-button {
+[data-theme="dark"] .bookings-grid-slot.booking-status-available.booking-status-shared-single.booking-status-shared-recurring .bookings-grid-button,
+[data-theme="dark"] .bookings-grid-slot.booking-status-booked.booking-status-shared-single.booking-status-shared-recurring .bookings-grid-button {
   border-color: #56644e;
   background: linear-gradient(135deg, #234232 0 50%, #38334a 50% 100%);
   color: #eee8f8;
@@ -1693,18 +1945,21 @@ table td > a[title="Delete"]:focus-visible {
   background: var(--ui-surface);
 }
 
-[data-theme="dark"] .session-calendar.mode-nav .date-cell {
-  background: var(--ui-surface-muted);
-}
-
 [data-theme="dark"] .session-calendar.mode-nav .date-cell .date-cell-content {
   color: var(--ui-text);
 }
 
 [data-theme="dark"] .session-calendar.mode-nav .date-cell.prev-month .date-cell-content,
 [data-theme="dark"] .session-calendar.mode-nav .date-cell.next-month .date-cell-content,
-[data-theme="dark"] .session-calendar.mode-nav .date-cell .date-cell-content[disabled] {
+[data-theme="dark"] .session-calendar.mode-nav .date-cell .date-cell-content[disabled],
+[data-theme="dark"] .session-calendar.mode-config .date-cell .date-cell-content[disabled] {
   color: var(--ui-muted);
+  opacity: 1;
+}
+
+[data-theme="dark"] .session-calendar.mode-config .date-cell .date-cell-content {
+  border-color: transparent;
+  background: transparent;
 }
 
 [data-theme="dark"] .session-calendar .date-link.is-selected span {

@@ -60,7 +60,7 @@ class DateFilter
 			'highlight_selected' => ($this->context->display_type == 'day') ? 'day' : 'week',
 		]);
 
-		return $calendar->generate_full_session();
+		return '<style>' . $calendar->get_css() . '</style>' . $calendar->generate_full_session();
 	}
 
 

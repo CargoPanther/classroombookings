@@ -314,6 +314,21 @@ class Rooms_model extends CI_Model
 			];
 		}
 
+		if ( ! empty($room->door_code)) {
+			$info[] = [
+				'name' => 'door_code',
+				'label' => lang('room.field.door_code'),
+				'value' => '<span class="door-code">'
+					. '<span class="door-code-mask" aria-hidden="true">&bull;&bull;&bull;&bull;&bull;&bull;</span>'
+					. '<span class="door-code-value" hidden>' . html_escape($room->door_code) . '</span>'
+					. '<button type="button" class="door-code-toggle" aria-pressed="false"'
+					. ' data-show="' . html_escape(lang('room.door_code.show')) . '"'
+					. ' data-hide="' . html_escape(lang('room.door_code.hide')) . '">'
+					. html_escape(lang('room.door_code.show')) . '</button>'
+					. '</span>',
+			];
+		}
+
 		// User
 		if ( ! empty($room->user_id)) {
 			$info[] = [

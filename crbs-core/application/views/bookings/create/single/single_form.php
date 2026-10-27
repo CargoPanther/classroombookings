@@ -10,13 +10,20 @@ echo form_hidden($hidden);
 
 $none = sprintf('(%s)', lang('app.none'));
 
+// After a POST the return params are in original_params
+$slot_params = $this->input->get('params') ?? '';
+if ($this->input->post('original_params')) {
+	parse_str((string) $this->input->post('original_params'), $original_vars);
+	$slot_params = $original_vars['params'] ?? $slot_params;
+}
+
 if (!empty($existing_bookings)) {
 	echo '<div class="booking-shared-layout"><div class="booking-shared-list">';
 	$booking_rows = [];
 	foreach ($existing_bookings as $existing_booking) {
 		$is_owner = (int) $existing_booking->user_id === (int) $this->userauth->user->user_id;
 		$is_recurring = !empty($existing_booking->repeat_id);
-		$can_view_user = $is_owner || has_permission($is_recurring ? Permission::BK_RECUR_VIEW_OTHER_USERS : Permission::BK_SGL_VIEW_OTHER_USERS, $room->room_id);
+		$can_view_user = booking_user_viewable($existing_booking);
 		$name = lang('booking.capacity.reserved');
 		if ($can_view_user && !empty($existing_booking->user)) {
 			$name = !empty($existing_booking->user->displayname)
@@ -27,8 +34,21 @@ if (!empty($existing_bookings)) {
 		$places_label = $places === 1 ? lang('booking.capacity.person') : lang('booking.capacity.people');
 
 		$actions = [];
+		if ($is_recurring) {
+			$series_url = site_url(sprintf('bookings/view_series/%d?%s', $existing_booking->booking_id, http_build_query(['params' => $slot_params, 'shared_slot' => 1])));
+			$actions[] = [
+				'link' => $series_url,
+				'name' => lang('app.action.view_all'),
+				'icon' => 'calendar_view_month.png',
+				'attrs' => [
+					'up-layer' => 'current',
+					'up-target' => '.bookings-create',
+					'up-history' => 'false',
+				],
+			];
+		}
 		if (booking_editable($existing_booking)) {
-			$params = $this->input->get('params') ?? '';
+			$params = $slot_params;
 			$edit_url = site_url('bookings/edit/' . $existing_booking->booking_id . '?' . http_build_query([
 				'params' => $params,
 				'shared_slot' => 1,
@@ -66,7 +86,7 @@ if (!empty($existing_bookings)) {
 			}
 		}
 		if (booking_cancelable($existing_booking)) {
-			$params = $this->input->get('params') ?? '';
+			$params = $slot_params;
 			$cancel_choices = $this->load->view('bookings/cancel_choice', [
 				'booking' => $existing_booking,
 				'current_user' => $this->userauth->user,
@@ -87,7 +107,10 @@ if (!empty($existing_bookings)) {
 		}
 		$action_html = $actions ? iconbar($actions) : '<span class="booking-shared-no-actions">&mdash;</span>';
 		$booking_type = $is_recurring ? lang('booking.type_recurring') : lang('booking.type_single');
-		$booking_rows[] = '<tr><td>' . html_escape($name) . '</td><td>' . html_escape($booking_type) . '</td><td>'
+		$notes_html = (booking_notes_viewable($existing_booking) && !empty($existing_booking->notes))
+			? '<div class="booking-shared-notes"><small>' . nl2br(html_escape($existing_booking->notes)) . '</small></div>'
+			: '';
+		$booking_rows[] = '<tr><td>' . html_escape($name) . $notes_html . '</td><td>' . html_escape($booking_type) . '</td><td>'
 			. sprintf('%d %s', $places, html_escape($places_label)) . '</td><td>' . $action_html . '</td></tr>';
 	}
 
@@ -112,10 +135,15 @@ if (!empty($existing_bookings)) {
 		echo '<div class="room-photo">' . $photo . '</div>';
 	}
 	echo '</section></div>';
-	if (!empty($has_current_user_booking) || !empty($single_create_unavailable)) {
+	$admin_add_collapsed = !empty($admin_add_for_other);
+	if ((!empty($has_current_user_booking) || !empty($single_create_unavailable)) && !$admin_add_collapsed) {
+		echo '</div>';
 		return;
 	}
 	echo '<div class="booking-shared-form">';
+	if ($admin_add_collapsed) {
+		echo '<details class="booking-admin-add"' . ($this->input->post('action') ? ' open' : '') . '><summary class="button">' . html_escape(lang('booking.add.for_other_user')) . '</summary>';
+	}
 }
 
 echo "<fieldset style='border:0'>";
@@ -125,7 +153,9 @@ echo "<fieldset style='border:0'>";
 $field = 'date';
 $label = form_label(lang('app.date'), 'date');
 $input = sprintf('%s (%s)', date_output_long($datetime), html_escape($week->name));
-echo "<p>{$label}{$input}</p>";
+if (empty($existing_bookings)) {
+	echo "<p>{$label}{$input}</p>";
+}
 
 
 // Period
@@ -208,7 +238,7 @@ if ($can_set_user) {
 	$options = results_to_assoc($all_users, 'user_id', fn($user) => !empty($user->displayname)
 			? $user->displayname
 			: $user->username, $none);
-	$value = set_value($field, $user->user_id, FALSE);
+	$value = set_value($field, !empty($admin_add_for_other) ? '' : $user->user_id, FALSE);
 	$input = form_dropdown([
 		'name' => $field,
 		'id' => $field,
@@ -256,5 +286,8 @@ $cancel = anchor($return_uri, lang('app.action.cancel'), ['up-dismiss' => '']);
 echo "<div class='submit' style='border-top:0px;'>{$submit} &nbsp; {$cancel}</div>";
 
 if (!empty($existing_bookings)) {
+	if (!empty($admin_add_for_other)) {
+		echo '</details>';
+	}
 	echo '</div></div>';
 }

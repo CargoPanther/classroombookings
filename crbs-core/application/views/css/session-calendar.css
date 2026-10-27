@@ -61,6 +61,98 @@
 		background-color: {bg_col};
 	}
 
+	[data-theme="dark"] .week{week_id}-bg {
+		background-color: {dark_bg} !important;
+		color: {dark_fg} !important;
+	}
+
+	[data-theme="dark"] .week{week_id}-fg {
+		color: {dark_fg} !important;
+	}
+
+	[data-theme="dark"] .bookings-grid-header.week{week_id}-bg {
+		background-color: {dark_bg} !important;
+	}
+
+	[data-theme="dark"] .bookings-grid-header.week{week_id}-fg,
+	[data-theme="dark"] .bookings-grid-header.week{week_id}-fg a {
+		color: {dark_fg} !important;
+	}
+
+	[data-theme="dark"] .week-{week_id}-dot {
+		background-color: {dark_bg} !important;
+	}
+
+	[data-theme="dark"] .session-calendar .week-{week_id} {
+		background-color: {dark_range} !important;
+		color: {dark_fg} !important;
+	}
+
+	[data-theme="dark"] .session-calendar .week-{week_id} .date-cell-content {
+		color: {dark_fg} !important;
+	}
+
+	[data-theme="dark"] .session-calendar .week-label-{week_id} {
+		color: {dark_fg} !important;
+		background-color: {dark_bg} !important;
+	}
+
+	[data-theme="dark"] .session-calendar .week-label-{week_id}:before,
+	[data-theme="dark"] .session-calendar .week-label-{week_id}:after {
+		background-color: {dark_bg} !important;
+	}
+
+	[data-theme="dark"] .session-calendar .week-{week_id} .is-selected span {
+		color: {dark_fg} !important;
+		background-color: {dark_bg} !important;
+	}
+
+	[data-theme-variant="neutral"] .week{week_id}-bg {
+		background-color: {neutral_bg} !important;
+		color: {neutral_fg} !important;
+	}
+
+	[data-theme-variant="neutral"] .week{week_id}-fg {
+		color: {neutral_fg} !important;
+	}
+
+	[data-theme-variant="neutral"] .bookings-grid-header.week{week_id}-bg {
+		background-color: {neutral_bg} !important;
+	}
+
+	[data-theme-variant="neutral"] .bookings-grid-header.week{week_id}-fg,
+	[data-theme-variant="neutral"] .bookings-grid-header.week{week_id}-fg a {
+		color: {neutral_fg} !important;
+	}
+
+	[data-theme-variant="neutral"] .week-{week_id}-dot {
+		background-color: {neutral_bg} !important;
+	}
+
+	[data-theme-variant="neutral"] .session-calendar .week-{week_id} {
+		background-color: {neutral_range} !important;
+		color: {neutral_fg} !important;
+	}
+
+	[data-theme-variant="neutral"] .session-calendar .week-{week_id} .date-cell-content {
+		color: {neutral_fg} !important;
+	}
+
+	[data-theme-variant="neutral"] .session-calendar .week-label-{week_id} {
+		color: {neutral_fg} !important;
+		background-color: {neutral_bg} !important;
+	}
+
+	[data-theme-variant="neutral"] .session-calendar .week-label-{week_id}:before,
+	[data-theme-variant="neutral"] .session-calendar .week-label-{week_id}:after {
+		background-color: {neutral_bg} !important;
+	}
+
+	[data-theme-variant="neutral"] .session-calendar .week-{week_id} .is-selected span {
+		color: {neutral_fg} !important;
+		background-color: {neutral_bg} !important;
+	}
+
 	/*.calendar .range-start.week-{week_id} .date-item {
 		border-left: 4px solid {boundary_bg};
 	}

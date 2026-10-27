@@ -267,7 +267,7 @@ span.green, p.green {
   font-size: 10pt;
 }
 
-p span, dd span {
+p span.highlight, dd span.highlight {
   background: #FFA;
 }
 

@@ -92,6 +92,24 @@ echo form_open_multipart(current_url(), array('class' => 'cssform', 'id' => 'roo
 	<?php echo form_error($field); ?>
 
 	<p>
+		<label for="door_code"><?= lang('room.field.door_code') ?></label>
+		<?php
+		$field = 'door_code';
+		$value = set_value($field, isset($room) ? $room->door_code : '', FALSE);
+		echo form_input(array(
+			'name' => $field,
+			'id' => $field,
+			'size' => '20',
+			'maxlength' => '50',
+			'autocomplete' => 'off',
+			'tabindex' => tab_index(),
+			'value' => $value,
+		));
+		?>
+	</p>
+	<?php echo form_error($field); ?>
+
+	<p>
 		<label for="user_id"><?= lang('room.field.user_id') ?></label>
 		<?php
 		$userlist = array('' => '(None)');

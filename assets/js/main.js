@@ -7,21 +7,29 @@
 
 	try {
 		var storedTheme = localStorage.getItem(storageKey);
-		hasStoredPreference = storedTheme === 'light' || storedTheme === 'dark';
+		hasStoredPreference = ['light', 'dark', 'dark-neutral'].indexOf(storedTheme) !== -1;
 	} catch (error) {}
 
 	function applyTheme(theme) {
-		document.documentElement.setAttribute('data-theme', theme);
+		var isDark = theme !== 'light';
+		document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+		document.documentElement.setAttribute('data-theme-variant', theme === 'dark-neutral' ? 'neutral' : 'standard');
 		var toggle = document.getElementById('theme-toggle');
+		var selector = document.getElementById('theme-select');
 		if (toggle) {
-			var isDark = theme === 'dark';
 			toggle.setAttribute('aria-pressed', isDark ? 'true' : 'false');
-			toggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+			toggle.setAttribute('aria-label', theme === 'light'
+				? 'Switch to dark mode'
+				: (theme === 'dark' ? 'Switch to neutral dark mode' : 'Switch to light mode'));
+			toggle.setAttribute('title', theme === 'light'
+				? 'Switch to dark mode'
+				: (theme === 'dark' ? 'Switch to neutral dark mode' : 'Switch to light mode'));
 		}
+		if (selector && selector.value !== theme) selector.value = theme;
 	}
 
 	function systemTheme() {
-		return media && media.matches ? 'dark' : 'light';
+		return media && media.matches ? 'dark-neutral' : 'light';
 	}
 
 	applyTheme(hasStoredPreference ? storedTheme : systemTheme());
@@ -30,7 +38,10 @@
 		var toggle = event.target.closest && event.target.closest('#theme-toggle');
 		if (!toggle) return;
 
-		var nextTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+		var currentTheme = document.documentElement.getAttribute('data-theme-variant') === 'neutral'
+			? 'dark-neutral'
+			: document.documentElement.getAttribute('data-theme');
+		var nextTheme = currentTheme === 'light' ? 'dark' : (currentTheme === 'dark' ? 'dark-neutral' : 'light');
 		hasStoredPreference = true;
 		applyTheme(nextTheme);
 		try {
@@ -38,9 +49,19 @@
 		} catch (error) {}
 	});
 
+	document.addEventListener('change', function(event) {
+		if (!event.target || event.target.id !== 'theme-select') return;
+		var theme = event.target.value;
+		hasStoredPreference = true;
+		applyTheme(theme);
+		try {
+			localStorage.setItem(storageKey, theme);
+		} catch (error) {}
+	});
+
 	if (media) {
 		var onSystemThemeChange = function(event) {
-			if (!hasStoredPreference) applyTheme(event.matches ? 'dark' : 'light');
+			if (!hasStoredPreference) applyTheme(event.matches ? 'dark-neutral' : 'light');
 		};
 		if (media.addEventListener) {
 			media.addEventListener('change', onSystemThemeChange);
@@ -51,7 +72,7 @@
 
 	window.addEventListener('storage', function(event) {
 		if (event.key !== storageKey) return;
-		hasStoredPreference = event.newValue === 'light' || event.newValue === 'dark';
+		hasStoredPreference = ['light', 'dark', 'dark-neutral'].indexOf(event.newValue) !== -1;
 		applyTheme(hasStoredPreference ? event.newValue : systemTheme());
 	});
 })();
@@ -335,6 +356,22 @@ up.compiler('.action-notification-source', function(source) {
 	});
 
 	source.remove();
+});
+
+// Show/hide toggle for room door codes
+document.addEventListener('click', function(event) {
+	var button = event.target.closest && event.target.closest('.door-code-toggle');
+	if (!button) return;
+
+	var wrapper = button.closest('.door-code');
+	var value = wrapper.querySelector('.door-code-value');
+	var mask = wrapper.querySelector('.door-code-mask');
+	var reveal = value.hidden;
+
+	value.hidden = !reveal;
+	mask.hidden = reveal;
+	button.setAttribute('aria-pressed', reveal ? 'true' : 'false');
+	button.textContent = reveal ? button.getAttribute('data-hide') : button.getAttribute('data-show');
 });
 
 //

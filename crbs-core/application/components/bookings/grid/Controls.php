@@ -23,6 +23,7 @@ class Controls
 	public function __construct(Context $context)
 	{
 		$this->CI =& get_instance();
+		$this->CI->load->helper('week');
 		$this->context = $context;
 	}
 
@@ -60,6 +61,7 @@ class Controls
 					'query_params' => $query_params,
 					'form_action' => $this->context->base_uri,
 					'datetime' => $this->context->datetime,
+					'week' => $this->context->timetable_week,
 				];
 
 				$view = 'bookings_grid/controls/day';
@@ -83,6 +85,7 @@ class Controls
 					'form_action' => $this->context->base_uri,
 					'datetime' => $this->context->datetime,
 					'week_start' => $this->context->week_start,
+					'week' => $this->context->timetable_week,
 				];
 
 				$view = 'bookings_grid/controls/room';

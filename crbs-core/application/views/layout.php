@@ -43,10 +43,11 @@ if ($is_setup_page && has_setup_permission()) {
 	try {
 		theme = localStorage.getItem('crbs-theme');
 	} catch (error) {}
-	if (theme !== 'light' && theme !== 'dark') {
-		theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+	if (theme !== 'light' && theme !== 'dark' && theme !== 'dark-neutral') {
+		theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark-neutral' : 'light';
 	}
-	document.documentElement.setAttribute('data-theme', theme);
+	document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+	document.documentElement.setAttribute('data-theme-variant', theme === 'dark-neutral' ? 'neutral' : 'standard');
 })();
 </script>
 <?php
@@ -203,12 +204,22 @@ var BASE_URL = "<?= base_url() ?>";
 						&copy; <?= date('Y') ?> Craig A Rodway.
 					</span>
 					<span><?php echo sprintf('%s: %s %s', lang('app.load_time'), $this->benchmark->elapsed_time(), lang('app.seconds')); ?></span>
-					<button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode">
-						<svg class="theme-toggle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-							<path d="M9 18h6m-5 3h4m-5.5-6.5a7 7 0 1 1 7 0c-.8.6-1.3 1.4-1.5 2.5h-5c-.2-1.1-.7-1.9-1.5-2.5Z" />
-							<path d="M12 2V1m7.8 3.2.7-.7M22 12h1M4.2 4.2l-.7-.7M2 12H1" />
-						</svg>
-					</button>
+					<div class="theme-controls">
+						<!-- Keep the cycle toggle available in source if needed later.
+						<button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode" title="Switch theme">
+							<svg class="theme-toggle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+								<path d="M9 18h6m-5 3h4m-5.5-6.5a7 7 0 1 1 7 0c-.8.6-1.3 1.4-1.5 2.5h-5c-.2-1.1-.7-1.9-1.5-2.5Z" />
+								<path d="M12 2V1m7.8 3.2.7-.7M22 12h1M4.2 4.2l-.7-.7M2 12H1" />
+							</svg>
+						</button>
+						-->
+						<label class="theme-select-label" for="theme-select">Theme</label>
+						<select id="theme-select" class="theme-select" aria-label="Choose theme">
+							<option value="light">Light</option>
+							<option value="dark">Dark green</option>
+							<option value="dark-neutral">Dark neutral</option>
+						</select>
+					</div>
 				</div>
 			</div>
 		</div>

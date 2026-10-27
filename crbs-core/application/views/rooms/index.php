@@ -29,8 +29,8 @@ foreach ($rooms as $room) {
 		'class' => 'room-directory-link',
 		'style' => 'display:block;min-height:1.5em;color:inherit;text-decoration:none;cursor:pointer',
 		'title' => lang('room.room_details'),
-		'up-layer' => 'new drawer',
-		'up-position' => 'left',
+		'up-layer' => 'new modal',
+		'up-size' => 'medium',
 		'up-target' => '.room-info',
 		'up-preload' => '',
 	];
