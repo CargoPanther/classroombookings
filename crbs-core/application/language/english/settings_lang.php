@@ -16,15 +16,15 @@ $lang['settings.general.experimental_features.hint'] = 'Try out new and experime
 $lang['settings.general.displaytype.label'] = 'Display type';
 $lang['settings.general.displaytype.hint'] = 'Specify the main focus and display mode of the bookings page.';
 $lang['settings.general.displaytype.day'] = 'Day';
-$lang['settings.general.displaytype.day.hint'] = 'all periods and rooms are shown for the selected date.';
-$lang['settings.general.displaytype.room'] = 'Room';
-$lang['settings.general.displaytype.room.hint'] = 'all periods and days of the week are shown for the selected room.';
+$lang['settings.general.displaytype.day.hint'] = 'all periods and resources are shown for the selected date.';
+$lang['settings.general.displaytype.room'] = 'Resource';
+$lang['settings.general.displaytype.room.hint'] = 'all periods and days of the week are shown for the selected resource.';
 
 $lang['settings.general.columns.label'] = 'Columns';
 $lang['settings.general.columns.hint'] = 'Select which data should be displayed horizontally along the top of the bookings page. The unselected option will be displayed vertically.';
 $lang['settings.general.columns.days'] = 'Days';
 $lang['settings.general.columns.periods'] = 'Periods';
-$lang['settings.general.columns.rooms'] = 'Rooms';
+$lang['settings.general.columns.rooms'] = 'Resources';
 $lang['settings.general.columns.error'] = 'The column you selected is incompatible with the display type.';
 
 $lang['settings.general.grid_highlight.label'] = 'Grid highlight';
@@ -44,7 +44,7 @@ $lang['settings.general.time_format_period.hint'] = 'Time format for periods.';
 $lang['settings.general.login_message_text'] = 'Message';
 $lang['settings.general.welcome_message'] = 'Dashboard welcome message';
 $lang['settings.general.welcome_message_text'] = 'Dashboard welcome message';
-$lang['settings.general.welcome_message_text.hint'] = 'This message is displayed on the dashboard. Changing it resets previous “Never show again” choices so users see the updated text.';
+$lang['settings.general.welcome_message_text.hint'] = 'This message is displayed on the dashboard. Changing the dashboard welcome message text resets previous “Never show again” choices so users see the updated text.';
 
 $lang['settings.general.maintenance_mode_message'] = 'Message';
 $lang['settings.general.maintenance_mode_message.hint'] = 'This is the message that will be displayed to users during maintenance mode.';

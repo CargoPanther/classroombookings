@@ -7,7 +7,7 @@ $lang['exception.DateException.forSessionRange'] = "The selected date (%s), is n
 $lang['exception.AgentException.forInvalidType'] = "Unrecognised booking type. Should be one of: %s";
 $lang['exception.AgentException.forNoSession'] = 'Requested date does not belong to a session.';
 $lang['exception.AgentException.forNoPeriod'] = 'Requested period could not be found.';
-$lang['exception.AgentException.forNoRoom'] = 'Requested room could not be found or is not bookable.';
+$lang['exception.AgentException.forNoRoom'] = 'Requested resource could not be found or is not bookable.';
 $lang['exception.AgentException.forInvalidDate'] = 'Requested date is not recognised or is not bookable.';
 $lang['exception.AgentException.forNoWeek'] = 'Requested date is not associated with a timetable week.';
 $lang['exception.AgentException.forNoBooking'] = 'Requested booking could not be found.';
@@ -20,7 +20,7 @@ $lang['exception.AvailabilityException.forHoliday'] = 'The date you selected is 
 
 
 $lang['exception.BookingValidationException.forExistingBooking'] = "Another booking already exists.";
-$lang['exception.BookingValidationException.forCapacityExceeded'] = 'The requested number of places is not available for this room and time.';
+$lang['exception.BookingValidationException.forCapacityExceeded'] = 'The requested number of places is not available for this resource and time.';
 $lang['exception.BookingValidationException.forHoliday'] = "Booking cannot be created on a holiday.";
 
 $lang['exception.SessionException.notSelected'] = "No active Session found.";
@@ -28,5 +28,5 @@ $lang['exception.SessionException.notSelected'] = "No active Session found.";
 
 $lang['exception.SettingsException.forDisplayType'] = "The 'Display Type' setting has not been set.";
 $lang['exception.SettingsException.forColumns'] = "The 'Display Columns' setting has not been set.";
-$lang['exception.SettingsException.forNoRooms'] = "There are no rooms available.";
-$lang['exception.SettingsException.forNoSchedule'] = "This room group doesn't have a Schedule configured for this session.";
+$lang['exception.SettingsException.forNoRooms'] = "There are no resources available.";
+$lang['exception.SettingsException.forNoSchedule'] = "This resource group doesn't have a Schedule configured for this session.";

@@ -254,6 +254,8 @@ up.compiler('.dashboard-welcome-message', function(messageEl) {
 	});
 
 	up.on(messageEl, 'click', '.dashboard-welcome-never', function() {
+		var csrfTokenName = document.querySelector('meta[name="csrf-token-name"]');
+		var csrfToken = document.querySelector('meta[name="csrf-token"]');
 		fetch(hideUrl, {
 			method: 'POST',
 			credentials: 'same-origin',

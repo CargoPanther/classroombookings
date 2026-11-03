@@ -1,6 +1,9 @@
 <?php
 
 $lang['auth.log_in'] = 'Log in';
+$lang['auth.logged_out.title'] = 'Logged out';
+$lang['auth.logged_out.message'] = 'You have been logged out.';
+$lang['auth.logged_out.button'] = 'Return to log in';
 $lang['auth.log_out'] = 'Log out';
 
 $lang['auth.bad_credentials'] = 'Incorrect username and/or password.';

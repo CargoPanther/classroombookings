@@ -32,6 +32,22 @@ class Login extends MY_Controller
 
 
 	/**
+	 * Shown after logout so automatic Microsoft sign-in is not triggered immediately.
+	 */
+	public function logged_out()
+	{
+		if ($this->userauth->logged_in()) {
+			redirect('dashboard');
+		}
+
+		$this->data['title'] = lang('auth.logged_out.title');
+		$this->data['body'] = $this->load->view('login/logged_out', $this->data, TRUE);
+
+		return $this->render();
+	}
+
+
+	/**
 	 * Username/password-only fallback for deployments using automatic Microsoft sign-in.
 	 */
 	public function local()

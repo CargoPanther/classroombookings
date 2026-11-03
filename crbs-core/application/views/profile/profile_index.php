@@ -8,7 +8,7 @@ echo iconbar(array(
 ?>
 
 <?php if($myroom){ ?>
-<h3>Staff bookings in my rooms</h3>
+<h3>Staff bookings in my resources</h3>
 <ul>
 <?php
 foreach($myroom as $booking){

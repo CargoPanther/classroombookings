@@ -19,7 +19,7 @@ class Logout extends MY_Controller
 		}
 
 		$this->userauth->log_out();
-		redirect('');
+		redirect('login/logged_out');
 	}
 
 

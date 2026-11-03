@@ -23,8 +23,8 @@ $lang['acl.delete.error'] = 'Error deleting the access entry.';
 
 $lang['acl.access_checker'] = 'Access Checker';
 $lang['acl.check_user_access'] = 'Check user access';
-$lang['acl.access_checker.user_and_room'] = 'Check user access for room';
+$lang['acl.access_checker.user_and_room'] = 'Check user access for resource';
 $lang['acl.access_checker.user'] = 'Check user access';
-$lang['acl.access_checker.room'] = 'Check room access';
+$lang['acl.access_checker.room'] = 'Check resource access';
 $lang['acl.actions.check_access'] = 'Check access';
 $lang['acl.result.title'] = '%s access for %s';

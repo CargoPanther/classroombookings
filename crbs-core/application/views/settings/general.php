@@ -259,6 +259,24 @@ echo form_open(current_url(), array('id'=>'settings', 'class'=>'cssform'));
 
 	<legend accesskey="W" tabindex="<?php echo tab_index() ?>"><?= lang('settings.general.welcome_message') ?></legend>
 
+	<?php
+	$field = 'welcome_message_enabled';
+	$value = set_value($field, element($field, $settings, '1'), FALSE);
+	?>
+	<p>
+		<label for="<?= $field ?>"><?= lang('app.enable') ?></label>
+		<?php
+		echo form_hidden($field, '0');
+		echo form_checkbox(array(
+			'name' => $field,
+			'id' => $field,
+			'value' => '1',
+			'tabindex' => tab_index(),
+			'checked' => ($value == '1')
+		));
+		?>
+	</p>
+
 	<p id="settings_welcome_message_text">
 		<?= form_label(lang('settings.general.welcome_message_text'), 'welcome_message_text') ?>
 		<?php

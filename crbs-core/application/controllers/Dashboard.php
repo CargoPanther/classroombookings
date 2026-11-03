@@ -35,7 +35,9 @@ class Dashboard extends MY_Controller
 
 		$this->data['title'] = 'Dashboard';
 		$this->data['showtitle'] = ''; 	//$this->data['title'];
-		$this->data['show_welcome_message'] = ! (bool) user_setting('dashboard_welcome_hidden', $user_id);
+		// Unset (existing installs) counts as enabled
+		$welcome_enabled = (string) setting('welcome_message_enabled') !== '0';
+		$this->data['show_welcome_message'] = $welcome_enabled && ! (bool) user_setting('dashboard_welcome_hidden', $user_id);
 
 		$this->data['body'] = '';
 		$this->data['body'] .= $this->session->flashdata('auth');
