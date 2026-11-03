@@ -32,41 +32,6 @@ if ($recurring_dates !== false) {
 
 echo "<fieldset style='border:0'>";
 
-// Date
-//
-$field = 'date';
-$label = form_label(lang('app.date'), 'date');
-$input = sprintf('%s (%s)', date_output_long($datetime), html_escape($week->name));
-echo "<p>{$label}{$input}</p>";
-
-
-// Period
-//
-$field = 'period_id';
-$label = form_label(lang('period.period'), $field);
-$options = results_to_assoc($all_periods, 'period_id', function($period) {
-	$start = date_output_time($period->time_start);
-	$end = date_output_time($period->time_end);
-	return sprintf('%s (%s - %s)', $period->name, $start, $end);
-});
-$value = set_value($field, $period->period_id, FALSE);
-$input = form_dropdown([
-	'name' => $field,
-	'id' => $field,
-	'options' => $options,
-	'selected' => $value,
-]);
-echo "<p>{$label}{$input}</p>";
-
-
-// Room
-//
-$field = 'room_id';
-$label = form_label(lang('room.room'), $field);
-$input = html_escape($room->name);
-echo "<p>{$label}{$input}</p>";
-
-
 // Capacity
 //
 $field = 'capacity';

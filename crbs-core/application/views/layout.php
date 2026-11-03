@@ -106,7 +106,7 @@ var BASE_URL = "<?= base_url() ?>";
 </script>
 
 </head>
-<body>
+<body class="<?= html_escape($body_class ?? '') ?>">
 
 	<?php
 	if (setting('maintenance_mode') == 1) {
@@ -148,7 +148,7 @@ var BASE_URL = "<?= base_url() ?>";
 							$name = "classroom";
 							$name .= "<span style='color:#ff6400;font-weight:bold'>bookings</span>";
 						}
-						echo anchor('/', $logo . $name, $attrs);
+						echo anchor('/', $logo . '<span class="title-name">' . $name . '</span>', $attrs);
 						?>
 					</div>
 				</div>

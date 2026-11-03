@@ -11,63 +11,89 @@ if ($this->input->post('original_params')) {
 }
 $params['step'] = 'details';
 
-$items = [];
-if ($can_book_single) {
-	if (empty($has_current_user_booking) && empty($single_create_unavailable)) {
-	$items[] = [
-		'link' => current_url().'?'.http_build_query(array_merge($params, ['booking_type' => 'single'])),
-		'name' => lang('booking.type_single'),
-		'icon' => 'cal_day.png',
-		'attrs' => ['up-target' => '.bookings-create'],
-	];
-}
-}
-if ($can_book_recur) {
-	if (empty($has_current_user_booking) && empty($single_create_unavailable)) {
-	$items[] = [
-			'link' => current_url().'?'.http_build_query(array_merge($params, ['booking_type' => 'recurring'])),
-			'name' => lang('booking.type_recurring'),
-			'icon' => 'arrow_refresh.png',
-			'attrs' => ['up-target' => '.bookings-create'],
-	];
-}
+$types = [];
+if (empty($has_current_user_booking) && empty($single_create_unavailable)) {
+	if ($can_book_single) {
+		$types['single'] = lang('booking.modal.type_single');
+	}
+	if ($can_book_recur) {
+		$types['recurring'] = lang('booking.modal.type_recurring');
+	}
 }
 
-if (count($items) > 1 && empty($has_current_user_booking) && empty($single_create_unavailable)) {
-	echo iconbar($items, current_url().'?'.http_build_query(array_merge($params, ['booking_type' => $booking_type])));
-}
+// Slot is only viewable: show the notice instead of a create form
+$notice_only = $subview === 'bookings/create/single/single_form'
+	&& (!empty($has_current_user_booking) || !empty($single_create_unavailable))
+	&& empty($admin_add_for_other);
 
+?>
+<div class="booking-modal-body">
 
-echo "<br>";
+	<div class="booking-modal-col">
+		<?php
+		if (!empty($existing_bookings)) {
+			$this->load->view('bookings/create/single/existing');
+		}
+		$this->load->view('bookings/create/single/room_details');
+		?>
+	</div>
 
-//
+	<div class="booking-modal-col">
+		<section class="booking-modal-card booking-modal-create">
+			<?php if (!$notice_only): ?>
+			<h3><?= lang('booking.modal.create_title') ?></h3>
+			<p class="booking-modal-summary"><?= lang('booking.modal.create_summary') ?></p>
+			<?php endif; ?>
 
-if ($message && (empty($booking_slot_notice) || !empty($admin_add_for_other))) {
-	echo msgbox('error large', $message);
-}
+			<?php if (count($types) > 1): ?>
+			<div class="booking-type-choice" role="radiogroup" aria-label="<?= html_escape(lang('booking.modal.type')) ?>">
+				<div class="booking-type-label"><?= lang('booking.modal.type') ?></div>
+				<?php foreach ($types as $type => $type_label): ?>
+				<a
+					href="<?= html_escape(current_url() . '?' . http_build_query(array_merge($params, ['booking_type' => $type]))) ?>"
+					class="booking-type-option<?= $booking_type === $type ? ' is-active' : '' ?>"
+					role="radio"
+					aria-checked="<?= $booking_type === $type ? 'true' : 'false' ?>"
+					up-target=".bookings-create"
+				><span class="booking-type-radio"></span><?= html_escape($type_label) ?></a>
+				<?php endforeach; ?>
+			</div>
+			<?php endif; ?>
 
-//
+			<?php
+			if ($notice_only) {
+				echo msgbox('notice large', $booking_slot_notice);
+			} else {
 
-if ($permit_booking || !empty($has_current_user_booking) || !empty($single_create_unavailable)) {
+				if ($message) {
+					echo msgbox('error large', $message);
+				}
 
-	// Ecnlose subview in form
-	//
+				if ($permit_booking) {
 
-	$attrs = [
-		'id' => 'bookings_create_single',
-		'class' => 'cssform booking-create-single',
-		'up-accept-location' => 'bookings',
-		'up-layer' => 'any',
-		'up-target' => '.bookings-create',
-	];
+					// Enclose subview in form
+					//
 
-	echo form_open(current_url(), $attrs, ['original_params' => http_build_query($this->input->get())]);
-	$this->load->view($subview);
+					$attrs = [
+						'id' => 'bookings_create_single',
+						'class' => 'cssform booking-create-single',
+						'up-accept-location' => 'bookings',
+						'up-layer' => 'any',
+						'up-target' => '.bookings-create',
+					];
 
-	echo form_close();
+					echo form_open(current_url(), $attrs, ['original_params' => http_build_query($this->input->get())]);
+					$this->load->view($subview);
+					echo form_close();
 
-} else {
+				} else {
 
-	$this->load->view($subview);
+					$this->load->view($subview);
 
-}
+				}
+			}
+			?>
+		</section>
+	</div>
+
+</div>

@@ -140,16 +140,15 @@ class SingleAgent extends BaseAgent
 		if (!empty($owned_bookings) || $remaining_capacity < 1) {
 			$this->booking_type = self::BOOK_SINGLE;
 		}
-		if (!empty($existing_bookings)) {
-			$this->title = date_output_long($this->datetime);
-			$this->title_html = sprintf(
-				'<div>%s</div><div>%s %s</div><div>%s</div>',
-				html_escape(date_output_long($this->datetime)),
-				week_dot($this->week, 'sm'),
-				html_escape($this->week->name),
-				html_escape(sprintf('%s (%s - %s)', $this->period->name, date_output_time($this->period->time_start), date_output_time($this->period->time_end)))
-			);
-		}
+		$this->slot_header = [
+			'room_name' => $this->room->name,
+			'date_label' => date_output_long($this->datetime),
+			'week' => $this->week,
+			'period_label' => sprintf('%s (%s - %s)', $this->period->name, date_output_time($this->period->time_start), date_output_time($this->period->time_end)),
+			'room_capacity' => $room_capacity,
+			'booked_capacity' => $booked_capacity,
+			'remaining_capacity' => $remaining_capacity,
+		];
 
 
 		$this->view_data['can_book_single'] = $can_book_single;

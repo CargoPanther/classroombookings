@@ -2,8 +2,8 @@
 $url = "rooms/info/{$room->room_id}";
 $name = html_escape($room->name);
 $link = anchor($url, $name, [
-	'up-layer' => 'new drawer',
-	'up-position' => 'left',
+	'up-layer' => 'new modal',
+	'up-size' => 'medium',
 	'up-target' => '.room-info',
 	'up-preload' => '',
 ]);

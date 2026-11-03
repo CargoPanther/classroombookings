@@ -164,16 +164,6 @@ class Grid
 				break;
 		}
 
-		$toggle_true = '<span class="multi-select-content" style="display:none;font-size:110%" data-multi="true">&#9745;</span>';
-		$toggle_false = '<span class="multi-select-content" style="font-size:110%" data-multi="false">&#9745;</span>';
-
-		$toggle_btn = form_button([
-			'type' => 'button',
-			'data-script' => 'on click trigger toggle_ms on .bookings-grid',
-			'content' => $toggle_false . $toggle_true . ' ' . lang('booking.toggle_multi_select'),
-			'style' => 'padding:2px 6px;line-height:18x;margin-left:32px',
-		]);
-
 		$create_btn = form_button([
 			'type' => 'submit',
 			'style' => 'padding:4px 6px;line-height:18x;border:1px solid #2ECC40;background:#EBFAEC;display:none',
@@ -192,7 +182,7 @@ class Grid
 			'content' => '&#10008; ' . lang('booking.action.cancel_bookings') . '...',
 		]);
 
-		$button_block = "<div class='block b-100' style='text-align:right;'>{$create_btn}{$cancel_btn}{$toggle_btn}</div>";
+		$button_block = "<div class='block b-100' style='text-align:right;'>{$create_btn}{$cancel_btn}</div>";
 
 		return "<div class='cssform block-group multi-select-controller' style='padding:8px;{$css}'>{$button_block}</div>";
 	}
@@ -240,7 +230,19 @@ class Grid
 			style='border:1px solid #000;border-width:0px 0px;margin:16px auto;'
 		><tr>{$cells_str}</tr></table>";
 
-		return $table;
+		$options_form = $this->CI->load->view('bookings_grid/layout_form', [
+			'params' => http_build_query($this->context->get_query_params()),
+		], TRUE);
+		$options_title = html_escape(lang('booking.layout.title'));
+		$options_btn = sprintf(
+			"<a href='#' class='bookings-grid-menu' title='%s' aria-label='%s' up-layer='new modal' up-size='medium' up-history='false' up-content='%s'>%s</a>",
+			$options_title,
+			$options_title,
+			html_escape($options_form),
+			ui_icon('sliders.png', ['width' => 20, 'height' => 20])
+		);
+
+		return "<div class='bookings-grid-legend-row'>{$table}{$options_btn}</div>";
 	}
 
 

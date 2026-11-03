@@ -1,6 +1,10 @@
 <?php
 
 $lang['auth.log_in'] = 'Log in';
+$lang['auth.login_to'] = 'Log in to %s';
+$lang['auth.or'] = 'OR';
+$lang['auth.remember_username'] = 'Remember username';
+$lang['auth.password.show'] = 'Show or hide password';
 $lang['auth.logged_out.title'] = 'Logged out';
 $lang['auth.logged_out.message'] = 'You have been logged out.';
 $lang['auth.logged_out.button'] = 'Return to log in';
@@ -63,7 +67,7 @@ $lang['auth.ldap.save.success'] = 'The LDAP settings have been updated.';
 
 $lang['auth.externallogintitle'] = 'Other Login options';
 $lang['auth.microsoft.title'] = 'Microsoft SSO';
-$lang['auth.microsoft.loginbutton'] = 'Login in with Microsoft';
+$lang['auth.microsoft.loginbutton'] = 'Login with Microsoft';
 $lang['auth.microsoft.configuration'] = 'Microsoft configuration';
 $lang['auth.microsoft.user_provisioning'] = 'User provisioning';
 $lang['auth.microsoft.field.enable'] = 'Enable Microsoft sign-in';

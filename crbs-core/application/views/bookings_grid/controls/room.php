@@ -46,8 +46,8 @@ if ($room) {
 	$info_url = "rooms/info/{$room->room_id}";
 	$icon = ui_icon('school_manage_details.png');
 	$info_link = anchor($info_url, $icon, [
-		'up-layer' => 'new drawer',
-		'up-position' => 'left',
+		'up-layer' => 'new modal',
+		'up-size' => 'medium',
 		'up-target' => '.room-info',
 		'up-preload' => '',
 		'style' => 'padding: 4px; margin: 0 24px 0 8px'

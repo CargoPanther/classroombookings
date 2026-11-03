@@ -239,6 +239,132 @@ up.compiler('select[up-autocomplete]', function(selectEl) {
 	});
 });
 
+var multiSelectKey = 'crbs-multi-select';
+
+function multiSelectGrid() {
+	return document.querySelector('.bookings-grid:not(.is-legend)');
+}
+
+function multiSelectIsOn(grid) {
+	return grid.getAttribute('data-multi') === 'true';
+}
+
+function setMultiSelect(on) {
+	var grid = multiSelectGrid();
+	if (grid && multiSelectIsOn(grid) !== on) {
+		grid.dispatchEvent(new CustomEvent('toggle_ms'));
+	}
+}
+
+// Re-apply the remembered multi-select state whenever the grid is (re)rendered.
+up.compiler('#bookings_grid', function() {
+	var stored = null;
+	try {
+		stored = sessionStorage.getItem(multiSelectKey);
+	} catch (e) {}
+	if (stored === '1') {
+		// Wait for hyperscript to install the grid's toggle handler.
+		setTimeout(function() {
+			setMultiSelect(true);
+		}, 0);
+	}
+});
+
+up.compiler('[data-password-toggle]', function(buttonEl) {
+	var input = document.getElementById(buttonEl.getAttribute('data-password-toggle'));
+	function toggle() {
+		var show = input.type === 'password';
+		input.type = show ? 'text' : 'password';
+		buttonEl.classList.toggle('is-active', show);
+		buttonEl.setAttribute('aria-pressed', show ? 'true' : 'false');
+	}
+	buttonEl.addEventListener('click', toggle);
+	return function() {
+		buttonEl.removeEventListener('click', toggle);
+	};
+});
+
+up.compiler('[data-remember-username]', function(formEl) {
+	var key = 'crbs-username';
+	var checkbox = formEl.querySelector('[data-remember-checkbox]');
+	var username = formEl.elements['username'];
+	var stored = null;
+	try {
+		stored = localStorage.getItem(key);
+	} catch (e) {}
+
+	if (stored && !username.value) {
+		username.value = stored;
+		formEl.elements['password'].focus();
+	}
+
+	function save() {
+		try {
+			if (checkbox.checked) {
+				localStorage.setItem(key, username.value);
+			} else {
+				localStorage.removeItem(key);
+			}
+		} catch (e) {}
+	}
+
+	formEl.addEventListener('submit', save);
+	return function() {
+		formEl.removeEventListener('submit', save);
+	};
+});
+
+up.compiler('[data-multi-select]', function(selectEl) {
+	var grid = multiSelectGrid();
+	selectEl.value = grid && multiSelectIsOn(grid) ? '1' : '0';
+
+	function onChange() {
+		try {
+			sessionStorage.setItem(multiSelectKey, selectEl.value);
+		} catch (e) {}
+		setMultiSelect(selectEl.value === '1');
+	}
+
+	selectEl.addEventListener('change', onChange);
+	return function() {
+		selectEl.removeEventListener('change', onChange);
+	};
+});
+
+up.compiler('[data-autosubmit]', function(fieldEl) {
+	function submit() {
+		fieldEl.form.submit();
+	}
+	fieldEl.addEventListener('change', submit);
+	return function() {
+		fieldEl.removeEventListener('change', submit);
+	};
+});
+
+up.compiler('[data-capacity-preview]', function(previewEl) {
+	var input = document.getElementById(previewEl.getAttribute('data-input'));
+	if (!input) {
+		return;
+	}
+
+	var available = parseInt(previewEl.getAttribute('data-available'), 10);
+	var hintEl = previewEl.querySelector('[data-capacity-hint]');
+
+	function update() {
+		var count = Math.max(1, parseInt(input.value, 10) || 1);
+		var over = count > available;
+		hintEl.textContent = over
+			? previewEl.getAttribute('data-over')
+			: previewEl.getAttribute('data-hint').replace('{count}', count).replace('{available}', available);
+		hintEl.classList.toggle('is-over', over);
+	}
+
+	input.addEventListener('input', update);
+	return function() {
+		input.removeEventListener('input', update);
+	};
+});
+
 up.compiler('.dashboard-welcome-message', function(messageEl) {
 	var hideUrl = messageEl.getAttribute('data-hide-url');
 	if (!hideUrl) {

@@ -90,7 +90,7 @@ class Table
 		$tbody = '<tbody>' . $header_row . $content_rows . '</tbody>';
 
 		$classes = 'bookings-grid';
-		if (setting('grid_highlight') == 1) {
+		if (grid_layout_setting('grid_highlight') == 1) {
 			$classes .= ' has-highlight';
 		}
 

@@ -65,6 +65,35 @@ function user_setting($key, $user_id = null)
 }
 
 
+/**
+ * The user's own bookings grid layout, stored in a cookie. Invalid values are ignored.
+ */
+function grid_layout_prefs()
+{
+	$CI =& get_instance();
+	$data = json_decode((string) $CI->input->cookie('grid_layout'), TRUE);
+	if ( ! is_array($data)) return [];
+
+	$prefs = [];
+	if (in_array($data['layout'] ?? '', ['day.periods', 'day.rooms', 'room.periods', 'room.days'], TRUE)) {
+		[$prefs['displaytype'], $prefs['d_columns']] = explode('.', $data['layout']);
+	}
+	if (in_array($data['highlight'] ?? '', ['0', '1'], TRUE)) {
+		$prefs['grid_highlight'] = $data['highlight'];
+	}
+	return $prefs;
+}
+
+
+/**
+ * Bookings grid layout setting: the user's own choice, falling back to the site-wide default.
+ */
+function grid_layout_setting($name)
+{
+	return grid_layout_prefs()[$name] ?? setting($name);
+}
+
+
 function feature($name)
 {
 	return setting($name, 'features') == '1';

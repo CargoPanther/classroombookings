@@ -66,6 +66,32 @@ class Bookings extends MY_Controller
 	}
 
 
+	/**
+	 * Save the user's own bookings grid layout in a cookie.
+	 *
+	 */
+	public function layout()
+	{
+		if ($this->input->method(TRUE) !== 'POST') {
+			show_404();
+		}
+
+		$data = [
+			'layout' => (string) $this->input->post('layout'),
+			'highlight' => (string) $this->input->post('highlight'),
+		];
+
+		$this->input->set_cookie([
+			'name' => 'grid_layout',
+			'value' => json_encode($data),
+			'expire' => 31536000,
+			'httponly' => TRUE,
+		]);
+
+		redirect('bookings?' . $this->input->post('params'));
+	}
+
+
 	public function filter($type)
 	{
 		switch ($type) {
@@ -291,6 +317,7 @@ class Bookings extends MY_Controller
 			$this->data['title'] = $agent->title;
 		}
 		$this->data['title_html'] = $agent->title_html;
+		$this->data['slot_header'] = $agent->slot_header;
 
 		$this->data['body'] = $this->load->view('bookings/create', $this->data, TRUE);
 

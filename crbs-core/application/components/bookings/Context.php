@@ -217,8 +217,8 @@ class Context
 	public function autofill($params = [])
 	{
 		$config = [
-			'display_type' => $this->CI->settings_model->get('displaytype'),
-			'columns' => $this->CI->settings_model->get('d_columns'),
+			'display_type' => grid_layout_setting('displaytype'),
+			'columns' => grid_layout_setting('d_columns'),
 			'user_id' => $this->CI->userauth->user->user_id,
 			'room_id' => $this->CI->input->get('room'),
 			'room_group_id' => $this->CI->input->get('room_group'),

@@ -20,8 +20,8 @@
 					$title_html = "<div class='dash-booking-title'>{$date_str}</div>";
 					$room_url = "rooms/info/{$booking->room->room_id}";
 					$room_link = anchor($room_url, $room_name, [
-						'up-layer' => 'new drawer',
-						'up-position' => 'left',
+						'up-layer' => 'new modal',
+						'up-size' => 'medium',
 						'up-target' => '.room-info',
 						'up-preload',
 					]);

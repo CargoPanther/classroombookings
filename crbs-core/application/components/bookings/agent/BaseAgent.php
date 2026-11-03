@@ -31,6 +31,9 @@ abstract class BaseAgent
 	// Optional HTML replacement for the title heading
 	protected $title_html = '';
 
+	// Data for the slot header shown at the top of the booking modal
+	protected ?array $slot_header = null;
+
 	// Status success/error message
 	protected $message = '';
 

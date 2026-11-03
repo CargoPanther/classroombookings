@@ -41,9 +41,25 @@ class Login extends MY_Controller
 		}
 
 		$this->data['title'] = lang('auth.logged_out.title');
-		$this->data['body'] = $this->load->view('login/logged_out', $this->data, TRUE);
+		$this->data['body_class'] = 'login-page';
+		$this->data['body'] = $this->login_layout($this->load->view('login/logged_out', $this->data, TRUE));
 
 		return $this->render();
+	}
+
+
+	/**
+	 * Centre the card, with the organisation image beside it when one is set.
+	 */
+	private function login_layout($card_html)
+	{
+		$image_url = image_url(setting('logo'));
+		$image_html = '';
+		if (!empty($image_url)) {
+			$image_html = '<div class="login-image">' . img($image_url, FALSE, ['alt' => '']) . '</div>';
+		}
+
+		return '<div class="login-layout' . ($image_html ? ' has-image' : '') . '">' . $card_html . $image_html . '</div>';
 	}
 
 
@@ -75,26 +91,10 @@ class Login extends MY_Controller
 		}
 
 		$this->data['microsoft_enabled'] = $show_microsoft && (bool) setting('auth_microsoft_enabled', 'auth');
+		$this->data['org_name'] = setting('name') ?: 'classroombookings';
+		$this->data['body_class'] = 'login-page';
 
-		$columns = array(
-			'c1' => array(
-				'width' => '60%',
-				'content' => $this->load->view('login/login_index', $this->data, TRUE),
-			),
-			'c2' => array(
-				'width' => '40%',
-				'content' => '',
-			),
-		);
-
-		$image_url = image_url(setting('logo'));
-		$logo_html = (!empty($image_url))
-			? img($image_url, FALSE, ["style" => 'max-width:100%;max-height:300px;width:auto;display:block'])
-			: '';
-
-		$columns['c2']['content'] = $logo_html;
-
-		$body = $this->load->view('columns', $columns, TRUE);
+		$body = $this->login_layout($this->load->view('login/login_index', $this->data, TRUE));
 
 		$auth = (string) $this->session->flashdata('auth');
 

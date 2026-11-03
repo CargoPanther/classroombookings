@@ -57,7 +57,7 @@ function ui_icon($name, array $attributes = [])
 		'room_fields.png' => 'list', 'school_manage_weeks.png' => 'calendar', 'school_manage_holidays.png' => 'sun', 'school_manage_timetable.png' => 'calendar',
 		'comment.png' => 'message', 'report.png' => 'document', 'pdf.png' => 'document', 'page_copy.png' => 'document', 'user_import.png' => 'upload', 'email_go.png' => 'mail',
 		'chart.png' => 'chart', 'chart_bar.png' => 'chart', 'chart_curve.png' => 'chart', 'chart_line.png' => 'chart', 'chart_pie.png' => 'chart',
-		'cake.png' => 'star', 'bug.png' => 'alert', 'shield.png' => 'lock', 'link_controlpanel.png' => 'settings', 'link_help.png' => 'info',
+		'cake.png' => 'star', 'bug.png' => 'alert', 'menu.png' => 'menu', 'sliders.png' => 'sliders', 'shield.png' => 'lock', 'link_controlpanel.png' => 'settings', 'link_help.png' => 'info',
 	];
 
 	$type = $aliases[$name] ?? 'document';
@@ -87,6 +87,8 @@ function ui_icon($name, array $attributes = [])
 		'image' => '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 3 3 3-4 5 6"/>',
 		'globe' => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>',
 		'list' => '<path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/>',
+		'menu' => '<path d="M4 6h16M4 12h16M4 18h16"/>',
+		'sliders' => '<path d="M4 7h9M17 7h3M4 12h2M10 12h10M4 17h10M18 17h2"/><circle cx="15" cy="7" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="17" r="2"/>',
 		'sun' => '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
 		'message' => '<path d="M4 5h16v12H9l-5 4V5Z"/><path d="M8 9h8M8 13h5"/>',
 		'document' => '<path d="M6 3h8l4 4v14H6V3Z"/><path d="M14 3v5h5M9 12h6M9 16h6"/>',

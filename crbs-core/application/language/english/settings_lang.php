@@ -14,7 +14,7 @@ $lang['settings.general.experimental_features'] = 'Experimental Features';
 $lang['settings.general.experimental_features.hint'] = 'Try out new and experimental features.';
 
 $lang['settings.general.displaytype.label'] = 'Display type';
-$lang['settings.general.displaytype.hint'] = 'Specify the main focus and display mode of the bookings page.';
+$lang['settings.general.displaytype.hint'] = 'Specify the default main focus and display mode of the bookings page. Users can choose a different layout for themselves from the bookings page.';
 $lang['settings.general.displaytype.day'] = 'Day';
 $lang['settings.general.displaytype.day.hint'] = 'all periods and resources are shown for the selected date.';
 $lang['settings.general.displaytype.room'] = 'Resource';

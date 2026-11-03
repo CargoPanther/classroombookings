@@ -1,6 +1,6 @@
+<div class="login-form">
 <div class="login-card">
-	<p><?= lang('auth.logged_out.message') ?></p>
-	<p>
-		<a href="<?= site_url('login') ?>" class="button"><?= lang('auth.logged_out.button') ?></a>
-	</p>
+<h1 class="login-title"><?= lang('auth.logged_out.message') ?></h1>
+<a href="<?= site_url('login') ?>" class="login-submit"><?= lang('auth.logged_out.button') ?></a>
+</div>
 </div>
