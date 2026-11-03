@@ -198,12 +198,6 @@ var BASE_URL = "<?= base_url() ?>";
 		<div class="footer">
 			<div id="footer">
 				<div class="footer-meta">
-					<span>
-						<a href="https://www.classroombookings.com/" target="_blank" rel="noopener">classroombookings</a>
-						<?= strtolower(lang('app.version')) ?> <?= VERSION ?>.
-						&copy; <?= date('Y') ?> Craig A Rodway.
-					</span>
-					<span><?php echo sprintf('%s: %s %s', lang('app.load_time'), $this->benchmark->elapsed_time(), lang('app.seconds')); ?></span>
 					<div class="theme-controls">
 						<!-- Keep the cycle toggle available in source if needed later.
 						<button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false" aria-label="Switch to dark mode" title="Switch theme">
@@ -224,6 +218,12 @@ var BASE_URL = "<?= base_url() ?>";
 			</div>
 		</div>
 	</div>
+
+<?php if (!empty($log_app_info)): ?>
+<script>
+console.log(<?= json_encode_html(sprintf('classroombookings %s. © %s Craig A Rodway. %s: %s %s', VERSION, date('Y'), lang('app.load_time'), $this->benchmark->elapsed_time(), lang('app.seconds'))) ?>);
+</script>
+<?php endif; ?>
 
 </body>
 </html>
