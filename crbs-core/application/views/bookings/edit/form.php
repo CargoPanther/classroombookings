@@ -196,7 +196,7 @@ echo "<p>{$label}{$input}</p>";
 //
 $field = 'notes';
 $value = set_value($field, $booking->notes, FALSE);
-$label = form_label(lang('booking.notes'), 'notes');
+$label = form_label(lang('booking.notes') . ' <span class="booking-optional">(' . lang('booking.modal.optional') . ')</span>', 'notes');
 if ($features[UpdateAgent::FEATURE_EDIT_NOTES]) {
 	$input = form_textarea([
 		'name' => $field,

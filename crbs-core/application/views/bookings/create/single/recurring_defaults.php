@@ -32,21 +32,6 @@ if ($recurring_dates !== false) {
 
 echo "<fieldset style='border:0'>";
 
-// Capacity
-//
-$field = 'capacity';
-$label = form_label(lang('booking.capacity.form_label'), $field);
-$input = form_input([
-	'name' => $field,
-	'id' => $field,
-	'type' => 'number',
-	'min' => 1,
-	'max' => max(1, (int) ($room->capacity ?? 1)),
-	'value' => set_value($field, $recurring_default_capacity ?? 1, FALSE),
-]);
-echo "<p>{$label}{$input}</p>";
-
-
 // Department
 //
 $field = 'department_id';
@@ -71,6 +56,40 @@ if ($can_set_department) {
 echo ($show_department)
 	? "<p>{$label}{$input}</p>"
 	: '';
+
+// Capacity
+$field = 'capacity';
+$label = form_label(lang('booking.capacity.form_label'), $field);
+$capacity_default = $default_booking_capacity;
+$value = set_value($field, $capacity_default, FALSE);
+$input = form_input([
+	'name' => $field,
+	'id' => $field,
+	'type' => 'number',
+	'min' => 1,
+	'max' => max(1, $remaining_capacity),
+	'step' => 1,
+	'required' => TRUE,
+	'value' => $value,
+]);
+echo "<p>{$label}{$input}</p>";
+echo form_error($field);
+
+$requested = max(1, (int) $value);
+$hint_template = lang('booking.modal.capacity_hint');
+$over = $requested > $remaining_capacity;
+$hint_text = $over
+	? lang('booking.capacity.invalid')
+	: strtr($hint_template, ['{count}' => $requested, '{available}' => $remaining_capacity]);
+printf(
+	'<div class="booking-capacity-preview" data-capacity-preview data-input="%s" data-available="%d" data-hint="%s" data-over="%s">',
+	html_escape($field),
+	$remaining_capacity,
+	html_escape($hint_template),
+	html_escape(lang('booking.capacity.invalid'))
+);
+echo '<p class="booking-capacity-hint' . ($over ? ' is-over' : '') . '" data-capacity-hint>' . html_escape($hint_text) . '</p>';
+echo '</div>';
 
 // Who
 //
@@ -100,7 +119,7 @@ echo "<p>{$label}{$input}</p>";
 //
 $field = 'notes';
 $value = set_value($field, '', FALSE);
-$label = form_label(lang('booking.notes'), 'notes');
+$label = form_label(lang('booking.notes') . ' <span class="booking-optional">(' . lang('booking.modal.optional') . ')</span>', 'notes');
 $input = form_textarea([
 	'autofocus' => 'true',
 	'name' => $field,

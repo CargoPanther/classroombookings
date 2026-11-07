@@ -24,7 +24,7 @@ $lang['booking.capacity.invalid'] = 'The requested number of places is not avail
 $lang['booking.capacity.duplicate'] = 'The selected user already has a booking in this time slot. Update that booking instead.';
 $lang['booking.capacity.owned_slot'] = 'You already have a booking in this slot. You may change it using the Edit button beside your booking.';
 $lang['booking.capacity.owned_title'] = 'Existing bookings in this slot';
-$lang['booking.capacity.full'] = 'This slot is fully booked. You can review or update the existing bookings below.';
+$lang['booking.capacity.full'] = 'This slot is fully booked.';
 $lang['booking.capacity.full_title'] = 'This slot is fully booked';
 $lang['booking.add.for_other_user'] = 'Add booking for another user';
 $lang['booking.add.for_other_user.required'] = 'Choose the user to book for.';
@@ -52,7 +52,7 @@ $lang['booking.modal.type'] = 'Booking type';
 $lang['booking.modal.type_single'] = 'One-time booking';
 $lang['booking.modal.type_recurring'] = 'Recurring booking';
 $lang['booking.modal.optional'] = 'optional';
-$lang['booking.modal.notes_placeholder'] = 'Add any additional information (e.g. equipment, purpose)';
+$lang['booking.modal.notes_placeholder'] = '';
 $lang['booking.modal.capacity_hint'] = '{count} out of {available} remaining places will be booked.';
 
 $lang['booking.layout.label'] = 'Layout';
@@ -95,7 +95,7 @@ $lang['booking.edit.action'] = 'Update booking';
 
 $lang['booking.add.single.action'] = 'Create one-time booking';
 $lang['booking.add.recurring.action'] = 'Create recurring booking';
-$lang['booking.recurring.repeat_description'] = 'Every %s on %s';
+$lang['booking.recurring.repeat_description'] = 'Every %s on %s, in this timeslot. ';
 $lang['booking.recurring.starting_from'] = 'Starting from...';
 $lang['booking.recurring.until'] = 'Until...';
 $lang['booking.recurring.start_of_session'] = 'Start of session';
