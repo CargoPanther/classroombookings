@@ -1,28 +1,38 @@
-# classroombookings - open source room booking system for schools.
-
-By Craig A Rodway.
-
+# classroombookings - open source booking system designed for schools.
 [![License: AGPLv3](https://img.shields.io/static/v1?label=License&message=AGPLv3&color=3DA639&style=flat-square)](https://www.gnu.org/licenses/agpl-3.0.html)
-[![Twitter Follow](https://img.shields.io/twitter/follow/crbsapp.svg?style=social)](https://twitter.com/crbsapp)
 
-This is a web-based room booking system for schools and is designed to be as easy to use as possible. Set up your bookable rooms, day schedule and timetable for the year. Add user accounts, and allow them to make and manage bookings from anywhere.
+This is a web-based system that allows users to book resources such as rooms or equipment. Set up your bookable resources, day schedule and timetable for the year. Add user accounts, and allow them to make and manage bookings from anywhere.
 
-It is available to [download and install yourself](https://www.classroombookings.com/self-host/) or there is a great value [hosted service](https://www.classroombookings.com/pricing/).
+Key features:
+- User login and automatic provisioning with LDAP or Microsoft Entra SSO
+- Granular permissions system with sensible defaults
+- Ability to create one-time or recurring bookings
+- Multiple users can book a resource within the same time slot if it has sufficient capacity
+- Support for alternating timetable weeks
 
-It is web-based - PHP and MySQL - and currently uses the [CodeIgniter 3](https://codeigniter.com/) framework.
+## Install
+Requirements:
+- Web server with PHP 8.4+ with modules: mysql/mysqli/pdo_mysql, intl, gd
+- MySQL or MariaDB database
 
-## Documentation
-For installation instructions and configuration guide, please [read the documentation pages](https://www.classroombookings.com/docs/self-hosted/).
+Install steps:
+1. Upload the app files to your web server's document root 
+2. Allow the user account which runs your webserver permission to write to the "local" and "uploads" folder
 
-## Additional changes
-- Added configurable Microsoft single sign-on, including optional automatic sign-in from the login page and a username/password-only fallback at `/login/local`.
-- Added an administrator-managed dashboard welcome message with per-user dismissal and a “Never show again” option. Updating the message resets saved “Never show again” choices.
+```
+chmod -R 775 local
+chmod -R 775 uploads
+```
+3. Create database and database user
+```
+CREATE DATABASE crbs_db;
+GRANT ALL ON crbs_db.* TO 'crbs_user' IDENTIFIED BY 'ReplaceMe8zFQooA8z';
+```
+4. Visit the IP address or URL of your server, this should load the web based installer where you will configure the app and database connection
 
-## Bug Reports & Feature Requests
-Please check out [GitHub Issues](https://github.com/craigrodway/classroombookings/issues) to view existing issues or open a new bug report.
+## Important information
+This is a fork of [classroombookings by Craig A Rodway](https://www.classroombookings.com) which adds features such as Microsoft SSO, shared booking slots, light/dark modes and other modern UI changes.
 
-## Security
-To report any security issues, please email craig@classroombookings.com instead of using the issue tracker.
 
 ## Credits
 

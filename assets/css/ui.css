@@ -1866,7 +1866,7 @@ table td > a[title="Delete"]:focus-visible {
 
 [data-theme="dark"] .cssform p.hint,
 [data-theme="dark"] .cssform ul.hint {
-  background: var(--ui-surface-muted);
+  background: var(--ui-surface);
   color: var(--ui-muted);
 }
 

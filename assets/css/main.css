@@ -958,7 +958,7 @@
 }
 
 .block-group {
-  *zoom: 1;
+  zoom: 1;
 }
 
 .block-group:before, .block-group:after {
@@ -2095,6 +2095,7 @@ small.hint {
   font-size: 85%;
   color: #777;
   padding-left: 145px; /*width of left column containing the label elements*/
+  border-radius: 50px;
 }
 
 .cssform ul.hint {

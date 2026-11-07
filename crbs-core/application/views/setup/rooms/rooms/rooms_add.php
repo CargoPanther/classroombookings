@@ -49,7 +49,7 @@ echo form_open_multipart(current_url(), array('class' => 'cssform', 'id' => 'roo
 			'tabindex' => tab_index(),
 		]);
 		?>
-		<span class="hint"><?= lang('room.field.capacity.hint') ?></span>
+		<p class="hint"><?= lang('room.field.capacity.hint') ?></p>
 	</p>
 	<?php echo form_error($field); ?>
 
