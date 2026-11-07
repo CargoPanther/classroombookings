@@ -18,4 +18,4 @@ $lang['department.update.error'] = 'There was an error updating the department.'
 $lang['department.delete.success'] = 'Department %s has been deleted.';
 $lang['department.delete.title'] = 'Delete Department: %s';
 
-$lang['department.delete.warning'] = 'Only the department will be deleted - any bookings or users associated with this department will not be affected.';
+$lang['department.delete.warning'] = 'Only the department will be deleted; any bookings or users associated with it will not be affected.';

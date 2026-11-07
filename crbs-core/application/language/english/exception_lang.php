@@ -1,10 +1,10 @@
 <?php
 
-$lang['exception.DateException.invalidDate'] = "No date selected or date is not valid (%s).";
-$lang['exception.DateException.forSessionRange'] = "The selected date (%s), is not within the current Session.";
+$lang['exception.DateException.invalidDate'] = "No date was selected or the date is invalid (%s).";
+$lang['exception.DateException.forSessionRange'] = "The selected date (%s) is not within the current Session.";
 
 
-$lang['exception.AgentException.forInvalidType'] = "Unrecognised booking type. Should be one of: %s";
+$lang['exception.AgentException.forInvalidType'] = "Unrecognised booking type. It should be one of: %s";
 $lang['exception.AgentException.forNoSession'] = 'Requested date does not belong to a session.';
 $lang['exception.AgentException.forNoPeriod'] = 'Requested period could not be found.';
 $lang['exception.AgentException.forNoRoom'] = 'Requested resource could not be found or is not bookable.';
@@ -21,7 +21,7 @@ $lang['exception.AvailabilityException.forHoliday'] = 'The date you selected is 
 
 $lang['exception.BookingValidationException.forExistingBooking'] = "Another booking already exists.";
 $lang['exception.BookingValidationException.forCapacityExceeded'] = 'The requested number of places is not available for this resource and time.';
-$lang['exception.BookingValidationException.forHoliday'] = "Booking cannot be created on a holiday.";
+$lang['exception.BookingValidationException.forHoliday'] = "A booking cannot be created on a holiday.";
 
 $lang['exception.SessionException.notSelected'] = "No active Session found.";
 

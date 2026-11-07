@@ -9,7 +9,7 @@ $lang['settings.general.datetime.link'] = 'view reference';
 $lang['settings.general.login_message'] = 'Login Message';
 $lang['settings.general.login_message.hint'] = 'Display a custom message to users on the login page.';
 $lang['settings.general.maintenance_mode'] = 'Maintenance Mode';
-$lang['settings.general.maintenance_mode.hint'] = 'Enabling Maintenance Mode prevents user accounts from viewing and making bookings, unless exempt via permissions for their Role. All users can still log in to make changes to their own account or change their password.';
+$lang['settings.general.maintenance_mode.hint'] = 'Enabling maintenance mode prevents users from viewing and making bookings unless their role has permission to bypass it. All users can still log in to make changes to their own account or change their password.';
 $lang['settings.general.experimental_features'] = 'Experimental Features';
 $lang['settings.general.experimental_features.hint'] = 'Try out new and experimental features.';
 

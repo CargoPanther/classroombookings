@@ -41,7 +41,7 @@ $lang['user.create.error'] = 'There was an error creating the user.';
 $lang['user.update.success'] = 'User %s has been updated.';
 $lang['user.update.error'] = 'There was an error updating the user.';
 $lang['user.delete.success'] = 'User %s has been deleted.';
-$lang['user.delete.title'] = 'Delete User: %s';
+$lang['user.delete.title'] = 'Delete user: %s';
 
 $lang['user.delete.warning'] = 'If you delete this user, all of their past and future bookings will also be deleted.';
 
@@ -52,14 +52,14 @@ $lang['user.import.title'] = 'Import users';
 $lang['user.import.source'] = 'Source file';
 $lang['user.import.csv_file'] = 'CSV file';
 $lang['user.import.default_values'] = 'Default values';
-$lang['user.import.default_values.hint'] = 'Enter the default values that will be applied to all users if not specified in the import file.';
+$lang['user.import.default_values.hint'] = 'Enter the default values that will be applied to users when values are not specified in the import file.';
 
 $lang['user.import.create_accounts'] = 'Create accounts';
 $lang['user.import.csv_format'] = 'CSV format';
 $lang['user.import.csv_format.hint'] = 'Your CSV file should have columns in the following order.';
 $lang['user.import.header_row_hint'] = "A header row with column headings is optional. If included, it will be ignored.";
 $lang['user.import.existing_user_hint'] = "Any users that already exist will be ignored and will not be updated.";
-$lang['user.import.role_department_hint'] = "When specifying role or department, use the exact Name of an existing classroombookings record.";
+$lang['user.import.role_department_hint'] = "When specifying a role or department, use the exact name of an existing classroombookings record.";
 
 $lang['user.import.error.no_data'] = "No import data found.";
 $lang['user.import.error.no_results'] = "Import results not found.";

@@ -23,7 +23,7 @@ $lang['room.door_code.hide'] = 'Hide';
 $lang['room.field.user_id'] = 'Owner';
 $lang['room.field.notes'] = 'Notes';
 $lang['room.field.bookable'] = 'Can be booked';
-$lang['room.field.bookable.hint'] = 'Specify if this resource should be visible to users and allow bookings to be made.';
+$lang['room.field.bookable.hint'] = 'Specify whether this resource should be visible to users and available for booking.';
 $lang['room.field.photo'] = 'Photo';
 $lang['room.field.photo.summary'] = 'Add a photo of the resource to help users identify it.';
 $lang['room.field.current_photo'] = 'Current photo';
@@ -35,14 +35,14 @@ $lang['room.create.error'] = 'There was an error creating the resource.';
 $lang['room.update.success'] = 'Resource %s has been updated.';
 $lang['room.update.error'] = 'There was an error updating the resource.';
 $lang['room.delete.success'] = 'Resource %s has been deleted.';
-$lang['room.delete.title'] = 'Delete Resource: %s';
+$lang['room.delete.title'] = 'Delete resource: %s';
 
 $lang['room.error.bad_image'] = 'There was an error processing the uploaded photo.';
 $lang['room.error.fields_error'] = 'There was an error saving the custom fields.';
 
 $lang['room.save_order.success'] = 'The resource order has been saved.';
 
-$lang['room.delete.warning'] = 'All bookings in this resource will also be deleted.';
+$lang['room.delete.warning'] = 'All bookings for this resource will also be deleted.';
 
 $lang['room.error.no_photo'] = 'No photo available for this resource.';
 $lang['room.photo.alt'] = 'Photo of %s';

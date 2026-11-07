@@ -26,5 +26,5 @@ $lang['room_group.rooms.ungrouped'] = '(No group)';
 
 $lang['room_group.save_order.success'] = 'The resource group order has been saved.';
 
-$lang['room_group.delete.warning'] = 'Resources that are currently in this group will not be deleted, but they can not be booked again until you add them to another group.';
+$lang['room_group.delete.warning'] = 'Resources that are currently in this group will not be deleted, but they cannot be booked again until you add them to another group.';
 

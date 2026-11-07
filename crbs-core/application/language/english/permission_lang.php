@@ -5,9 +5,9 @@ $lang = [
 	'permission.permissions' => 'Permissions',
 
 	'permission.scope.system.title' => 'System permissions',
-	'permission.scope.system.summary' => 'General system-wide permission.',
+	'permission.scope.system.summary' => 'General system-wide permissions.',
 	'permission.scope.bookings.title' => 'Booking permissions',
-	'permission.scope.bookings.summary' => 'Assigning these permissions to a Role will apply them to all resources and groups. Alternatively, you can grant permissions on a per-resource or per-resource group basis.',
+	'permission.scope.bookings.summary' => 'Assigning these permissions to a role will apply them to all resources and groups. Alternatively, you can grant permissions on a per-resource or per-resource group basis.',
 
 	'permission.group.setup' => 'Setup',
 	'permission.group.system' => 'System',
@@ -17,13 +17,13 @@ $lang = [
 
 	'permission.setup.authentication' => 'Authentication',
 	'permission.setup.departments' => 'Departments',
-	'permission.setup.rooms_acl' => 'Resources Access Control',
+	'permission.setup.rooms_acl' => 'Resource access control',
 	'permission.setup.roles' => 'Roles',
 	'permission.setup.rooms' => 'Resources',
 	'permission.setup.schedules' => 'Schedules',
 	'permission.setup.sessions' => 'Sessions',
 	'permission.setup.settings' => 'Settings',
-	'permission.setup.timetable_weeks' => 'Timetable Weeks',
+	'permission.setup.timetable_weeks' => 'Timetable weeks',
 	'permission.setup.users' => 'Users',
 
 	'permission.system.bypass_maintenance_mode' => 'Bypass maintenance mode',
@@ -34,19 +34,19 @@ $lang = [
 	'permission.room.view' => 'View resource and bookings',
 
 	'permission.book_single.view_other_notes' => 'View notes on bookings by other users',
-	'permission.book_single.view_other_users' => 'View user of other bookings',
+	'permission.book_single.view_other_users' => 'View users on other bookings',
 	'permission.book_single.create' => 'Create bookings',
 	'permission.book_single.edit_other_booking' => 'Edit bookings by other users',
 	'permission.book_single.cancel_other_booking' => 'Cancel bookings by other users',
-	'permission.book_single.set_user' => 'Set different user on bookings',
-	'permission.book_single.set_department' => 'Set different department on bookings',
+	'permission.book_single.set_user' => 'Set a different user on bookings',
+	'permission.book_single.set_department' => 'Set a different department on bookings',
 
 	'permission.book_recur.view_other_notes' => 'View notes on bookings by other users',
-	'permission.book_recur.view_other_users' => 'View user of other bookings',
+	'permission.book_recur.view_other_users' => 'View users on other bookings',
 	'permission.book_recur.create' => 'Create bookings',
 	'permission.book_recur.edit_other_booking' => 'Edit bookings by other users',
 	'permission.book_recur.cancel_other_booking' => 'Cancel bookings by other users',
-	'permission.book_recur.set_user' => 'Set different user on bookings',
-	'permission.book_recur.set_department' => 'Set different department on bookings',
+	'permission.book_recur.set_user' => 'Set a different user on bookings',
+	'permission.book_recur.set_department' => 'Set a different department on bookings',
 
 ];

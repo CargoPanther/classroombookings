@@ -21,7 +21,7 @@ $lang['holiday.delete.title'] = 'Delete holiday: %s';
 $lang['holiday.delete.warning'] = 'Deleting this holiday will allow bookings to be created again on the dates covered by this holiday.';
 
 $lang['holiday.help.dates'] = 'Enter the first and last dates of the holiday that should be unavailable for booking.';
-$lang['holiday.help.session'] = 'The start and end date must be in the %s session between the following dates:';
+$lang['holiday.help.session'] = 'The start and end dates must be within the %s session, between the following dates:';
 $lang['holiday.help.date_format'] = 'Date format';
 $lang['holiday.help.date_format.text'] = 'Use the DD/MM/YYYY format when entering dates. For example, 16/04/2026.';
 

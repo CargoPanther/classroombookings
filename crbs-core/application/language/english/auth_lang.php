@@ -12,7 +12,7 @@ $lang['auth.log_out'] = 'Log out';
 
 $lang['auth.bad_credentials'] = 'Incorrect username and/or password.';
 $lang['auth.login_required'] = 'You must be logged in to access that page.';
-$lang['auth.permission_required'] = 'You do not have required permissions to access that page.';
+$lang['auth.permission_required'] = 'You do not have the required permissions to access that page.';
 
 $lang['auth.authentication'] = 'Authentication';
 $lang['auth.ldap.ldap'] = 'LDAP';
@@ -22,7 +22,7 @@ $lang['auth.ldap.user_attribute_mapping'] = 'User attribute mapping';
 $lang['auth.ldap.user_assignments'] = 'Default user assignments';
 
 $lang['auth.ldap.user_attribute_mapping.hint.1'] = 'When you use a search filter to find the authenticating user, you can populate the following classroombookings user details with attributes found in LDAP each time they log in.';
-$lang['auth.ldap.user_attribute_mapping.hint.2'] = 'Combine multiple LDAP attributes by adding a colon before the attribute name, for example - ';
+$lang['auth.ldap.user_attribute_mapping.hint.2'] = 'Combine multiple LDAP attributes by adding a colon before each attribute name, for example: ';
 $lang['auth.ldap.user_attribute_mapping.hint.3'] = 'Leave these fields blank to disable automatic population.';
 
 $lang['auth.ldap.demo_notice'] = "In the demo mode, the verification feature and ability to enable LDAP authentication are disabled to prevent account lock-outs and protect against abuse.";
@@ -32,8 +32,8 @@ $lang['auth.ldap.field.ldap_enabled.title'] = 'Use LDAP to authenticate users.';
 
 $lang['auth.ldap.field.ldap_create_users'] = 'Create users';
 $lang['auth.ldap.field.ldap_create_users.title'] = 'Automatically create user accounts on successful authentication.';
-$lang['auth.ldap.field.ldap_create_users.hint.1'] = 'When enabled, any valid credentials returned from an LDAP authentication attempt will automatically create a classroombookings account with the Role and/or Department specified below.';
-$lang['auth.ldap.field.ldap_create_users.hint.2'] = 'When not enabled, only users who have an existing account in classroombookings will be authenticated.';
+$lang['auth.ldap.field.ldap_create_users.hint.1'] = 'When enabled, successful LDAP authentication automatically creates a classroombookings account with the Role and/or Department specified below.';
+$lang['auth.ldap.field.ldap_create_users.hint.2'] = 'When disabled, only users with an existing classroombookings account will be authenticated.';
 
 $lang['auth.ldap.field.ldap_server'] = 'Server';
 $lang['auth.ldap.field.ldap_server.hint'] = 'Hostname or IP address.';
@@ -54,20 +54,20 @@ $lang['auth.ldap.field.ldap_search_filter'] = 'Search filter';
 $lang['auth.ldap.field.ldap_search_filter.hint'] = 'The tag `:user` will be replaced by the user logging in.';
 
 $lang['auth.ldap.test.title'] = 'Verify settings';
-$lang['auth.ldap.test.hint.1'] = "Configure the settings on the left then provide a username and password in this box to verify access. You do not need to click Save before verifying the settings here.";
+$lang['auth.ldap.test.hint.1'] = "Configure the settings on the left, then provide a username and password in this box to verify access. You do not need to click Save before verifying the settings here.";
 $lang['auth.ldap.test.hint.2'] = "These credentials are passed directly to the LDAP server that you have specified and are never stored by classroombookings.";
 $lang['auth.ldap.test.verify'] = "Verify credentials";
 $lang['auth.ldap.test.verifying'] = "Testing connection";
 
 $lang['auth.ldap.test.bind_dn'] = 'Bind DN';
 $lang['auth.ldap.test.search_filter'] = 'Search filter';
-$lang['auth.ldap.test.auth_success'] = 'Authentication success!';
+$lang['auth.ldap.test.auth_success'] = 'Authentication successful!';
 
 $lang['auth.ldap.save.success'] = 'The LDAP settings have been updated.';
 
-$lang['auth.externallogintitle'] = 'Other Login options';
+$lang['auth.externallogintitle'] = 'Other login options';
 $lang['auth.microsoft.title'] = 'Microsoft SSO';
-$lang['auth.microsoft.loginbutton'] = 'Login with Microsoft';
+$lang['auth.microsoft.loginbutton'] = 'Log in with Microsoft';
 $lang['auth.microsoft.configuration'] = 'Microsoft configuration';
 $lang['auth.microsoft.user_provisioning'] = 'User provisioning';
 $lang['auth.microsoft.field.enable'] = 'Enable Microsoft sign-in';
@@ -124,12 +124,12 @@ $lang['auth.save'] = 'Save';
 
 $lang['auth.ldap.error.demo_mode'] = 'Feature disabled in demo mode.';
 $lang['auth.ldap.error.no_module'] = 'The PHP LDAP module is not installed or enabled.';
-$lang['auth.ldap.error.no_server_or_port'] = 'No server and/or port supplied.';
-$lang['auth.ldap.error.no_socket_connection'] = 'Connection error or timed out.';
+$lang['auth.ldap.error.no_server_or_port'] = 'The server or port was not supplied.';
+$lang['auth.ldap.error.no_socket_connection'] = 'Could not connect to the server or the connection timed out.';
 $lang['auth.ldap.error.invalid_ldap_uri'] = 'Invalid LDAP connection URI.';
-$lang['auth.ldap.error.no_username_or_password'] = 'No username and/or password.';
-$lang['auth.ldap.error.bind_error'] = 'LDAP bind error or bad username and/or password.';
+$lang['auth.ldap.error.no_username_or_password'] = 'The username or password was not supplied.';
+$lang['auth.ldap.error.bind_error'] = 'LDAP bind error or incorrect username or password.';
 $lang['auth.ldap.error.search_error'] = 'LDAP search error.';
 $lang['auth.ldap.error.search_num_results_error'] = 'LDAP search did not return exactly one result.';
-$lang['auth.ldap.error.search_get_entry_error'] = 'LDAP get search result entry error.';
-$lang['auth.ldap.error.search_get_attributes_error'] = 'LDAP get user attributes error.';
+$lang['auth.ldap.error.search_get_entry_error'] = 'Could not retrieve the LDAP search result entry.';
+$lang['auth.ldap.error.search_get_attributes_error'] = 'Could not retrieve LDAP user attributes.';

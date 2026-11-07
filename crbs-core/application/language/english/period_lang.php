@@ -3,7 +3,7 @@
 $lang['period.periods'] = 'Periods';
 $lang['period.period'] = 'Period';
 
-$lang['period.hint'] = 'All times should be entered in the 24 hour format, between 00:00 and 23:59. Periods times should not overlap.';
+$lang['period.hint'] = 'All times should be entered in 24-hour format, between 00:00 and 23:59. Period times should not overlap.';
 
 $lang['period.field.bookable'] = 'Bookable';
 $lang['period.field.name'] = 'Name';

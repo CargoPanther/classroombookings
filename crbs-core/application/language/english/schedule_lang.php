@@ -15,6 +15,6 @@ $lang['schedule.create.error'] = 'There was an error creating the schedule.';
 $lang['schedule.update.success'] = 'Schedule %s has been updated.';
 $lang['schedule.update.error'] = 'There was an error updating the schedule.';
 $lang['schedule.delete.success'] = 'Schedule %s has been deleted.';
-$lang['schedule.delete.title'] = 'Delete Schedule: %s';
+$lang['schedule.delete.title'] = 'Delete schedule: %s';
 
-$lang['schedule.delete.warning'] = 'All bookings in resources that use this schedule and all bookings for periods with the schedule will be deleted.';
+$lang['schedule.delete.warning'] = 'All bookings for resources that use this schedule and all bookings for periods in this schedule will be deleted.';

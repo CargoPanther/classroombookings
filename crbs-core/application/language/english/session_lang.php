@@ -12,7 +12,7 @@ $lang['session.add.title'] = 'Create session';
 $lang['session.edit.title'] = 'Update session';
 $lang['session.no_items'] = 'No sessions found.';
 
-$lang['session.error.no_timetable_weeks'] = 'Please add at least one Timetable Week.';
+$lang['session.error.no_timetable_weeks'] = 'Please add at least one timetable week.';
 $lang['session.error.no_week_selected'] = 'No week selected.';
 
 $lang['session.field.name'] = 'Name';
@@ -29,7 +29,7 @@ $lang['session.create.error'] = 'There was an error creating the session.';
 $lang['session.update.success'] = 'Session %s has been updated.';
 $lang['session.update.error'] = 'There was an error updating the session.';
 $lang['session.delete.success'] = 'Session %s has been deleted.';
-$lang['session.delete.title'] = 'Delete Session: %s';
+$lang['session.delete.title'] = 'Delete session: %s';
 
 $lang['session.save_weeks.success'] = "The session weeks have been updated.";
 $lang['session.save_weeks.error'] = "There was an error updating the session weeks.";
@@ -54,14 +54,14 @@ $lang['session.help.changing_dates'] = 'Changing dates';
 $lang['session.help.changing_dates.text'] = "If you change the start or end date after bookings have been made during the session, existing bookings <em>outside the new date range</em> will be deleted.";
 
 $lang['session.help.default_schedule'] = 'Default schedule';
-$lang['session.help.default_schedule.text'] = "Each resource group in the session can run on a different schedule. Specify a default schedule here that will be applied to existing resource groups or will be applied for any new resource groups you create. You can change each group's schedule later.";
+$lang['session.help.default_schedule.text'] = "Each resource group in the session can run on a different schedule. Specify a default schedule here to apply to existing resource groups or any new resource groups you create. You can change each group's schedule later.";
 
 
-$lang['session.weeks.intro'] = 'Click on the dates in each calendar to toggle the Timetable Week for that week.';
+$lang['session.weeks.intro'] = 'Click on the dates in each calendar to toggle the timetable week for that week.';
 
 
 $lang['session.room_schedules'] = 'Resource schedules';
 $lang['session.room_schedules.no_groups'] = 'No resource groups found.';
 
-$lang['session.room_schedules.help.intro'] = "Specify the schedule that should be used by each Resource group for this session. The chosen schedule for each group will apply to all resources within it.";
+$lang['session.room_schedules.help.intro'] = "Specify the schedule that should be used by each resource group for this session. The chosen schedule for each group will apply to all resources within it.";
 $lang['session.room_schedules.help.change_warning'] = "If you change the schedule for a resource group, bookings on the old schedule will no longer be accessible.";
