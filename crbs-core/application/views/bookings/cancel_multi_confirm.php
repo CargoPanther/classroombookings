@@ -26,8 +26,6 @@ $this->table->set_heading($cols);
 // Generate rows
 //
 
-$all_ids = array_column($bookings, 'booking_id');
-
 foreach ($bookings as $booking) {
 
 	if ( ! booking_cancelable($booking)) continue;
@@ -39,7 +37,7 @@ foreach ($bookings as $booking) {
 		'id' => $cancel_field,
 		'name' => $cancel_field,
 		'value' => 'cancel',
-		'checked' => set_value($cancel_field, 'cancel') == 'cancel',
+		'checked' => TRUE,
 	]);
 	$check_col = $cancel_check;
 

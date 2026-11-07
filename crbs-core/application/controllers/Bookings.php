@@ -285,24 +285,26 @@ class Bookings extends MY_Controller
 			? $classes[$type]
 			: NULL;
 
-		if ( ! $type) {
+		if ( ! $class) {
 			$this->data['view'] = msgbox('error', lang('booking.error.bad_type'));
 			$this->data['body'] = $this->load->view('bookings/create', $this->data, TRUE);
 			return $this->render();
 		}
 
+		$agent = NULL;
 		try {
 			$agent = $class::create();
 			$agent->load();
 			$agent->process();
 			$this->data['view'] = $agent->render();
 		} catch (AgentException $e) {
+			$agent = NULL;
 			$this->data['view'] = msgbox('error large', $e->getMessage());
 		}
 
 		// Finished - redirect back
 		//
-		if ($agent->is_success()) {
+		if ($agent && $agent->is_success()) {
 
 			$this->session->set_flashdata('bookings', msgbox('info', $agent->message));
 
@@ -313,11 +315,13 @@ class Bookings extends MY_Controller
 			return;
 		}
 
-		if ($agent->title) {
+		if ($agent && $agent->title) {
 			$this->data['title'] = $agent->title;
 		}
-		$this->data['title_html'] = $agent->title_html;
-		$this->data['slot_header'] = $agent->slot_header;
+		if ($agent) {
+			$this->data['title_html'] = $agent->title_html;
+			$this->data['slot_header'] = $agent->slot_header;
+		}
 
 		$this->data['body'] = $this->load->view('bookings/create', $this->data, TRUE);
 
@@ -346,18 +350,20 @@ class Bookings extends MY_Controller
 
 		$_GET['booking_id'] = $booking_id;
 
+		$agent = NULL;
 		try {
 			$agent = UpdateAgent::create();
 			$agent->load();
 			$agent->process();
 			$this->data['view'] = $agent->render();
 		} catch (AgentException $e) {
+			$agent = NULL;
 			$this->data['view'] = msgbox('error large', $e->getMessage());
 		}
 
 		// Finished - redirect back
 		//
-		if ($agent->is_success()) {
+		if ($agent && $agent->is_success()) {
 
 			$this->session->set_flashdata('bookings', msgbox('info', $agent->message));
 
@@ -368,7 +374,7 @@ class Bookings extends MY_Controller
 			return;
 		}
 
-		if ($agent->title) {
+		if ($agent && $agent->title) {
 			$this->data['title'] = $agent->title;
 		}
 
@@ -445,7 +451,8 @@ class Bookings extends MY_Controller
 
 				case 'all':
 					$res = $this->bookings_model->cancel_all($booking_id);
-					$success = msgbox('info', lang('booking.cancel.all.success'));
+					$this->load_cancellation_messages();
+					$success = msgbox('info', lang('booking.cancel.all.eligible.success'));
 					break;
 
 				default:
@@ -467,6 +474,7 @@ class Bookings extends MY_Controller
 	public function cancel_multi()
 	{
 		$this->data['title'] = lang('booking.cancel_multi.title');
+		$this->load_cancellation_messages();
 
 		if ($this->input->post('params')) {
 			$uri = 'bookings?' . $this->input->post('params');
@@ -480,7 +488,12 @@ class Bookings extends MY_Controller
 
 				$this->load->library('table');
 				$ids = $this->input->post('bookings') ?? [];
+				if ( ! is_array($ids)) $ids = [];
+				$ids = array_values(array_filter($ids, function ($id) {
+					return (is_int($id) || is_string($id)) && ctype_digit((string) $id) && (int) $id > 0;
+				}));
 				$bookings = $this->bookings_model->find_by_ids($ids);
+				$bookings = array_values(array_filter($bookings, 'booking_cancelable'));
 
 				if (empty($bookings)) {
 					$view = msgbox('error', lang('booking.cancel_multi.error.none_selected'));
@@ -493,14 +506,29 @@ class Bookings extends MY_Controller
 			case 'confirm':
 
 				$to_cancel = $this->input->post('bookings') ?? [];
+				if ( ! is_array($to_cancel)) $to_cancel = [];
 				$cancelled_count = 0;
+				$failed_count = 0;
+				$retry_ids = [];
+				$seen_ids = [];
 				foreach ($to_cancel as $id => $action) {
 
-					if ($action != 'cancel') continue;
+					if ($action !== 'cancel') continue;
+					if ( ! ctype_digit((string) $id) || (int) $id < 1) {
+						$failed_count++;
+						continue;
+					}
+					$id = (int) $id;
+					if (isset($seen_ids[$id])) continue;
+					$seen_ids[$id] = TRUE;
 					$booking = $this->bookings_model->include(['room'])->get($id);
-					if ($booking && booking_cancelable($booking)) {
-						$this->bookings_model->cancel_single($id);
+					if ( ! $booking || $booking->status != Bookings_model::STATUS_BOOKED || ! booking_cancelable($booking)) {
+						$failed_count++;
+					} elseif ($this->bookings_model->cancel_single($id)) {
 						$cancelled_count++;
+					} else {
+						$failed_count++;
+						$retry_ids[] = $id;
 					}
 				}
 
@@ -510,6 +538,22 @@ class Bookings extends MY_Controller
 					$msg = lang('booking.cancel_multi.none_cancelled');
 				}
 
+				if ($failed_count) {
+					$this->load->library('table');
+					$retry_bookings = $this->bookings_model->find_by_ids($retry_ids);
+					$retry_bookings = array_values(array_filter($retry_bookings, 'booking_cancelable'));
+					$this->data['return_uri'] = $_SESSION['return_uri'] ?? 'bookings';
+					$view = msgbox('info', $msg);
+					$view .= msgbox('error', sprintf(lang('booking.cancel_multi.failed'), $failed_count, count($retry_bookings)));
+					if ($retry_bookings) {
+						$this->data['bookings'] = $retry_bookings;
+						$view .= $this->load->view('bookings/cancel_multi_confirm', $this->data, TRUE);
+					} else {
+						$view .= anchor($this->data['return_uri'], lang('booking.cancel_multi.back'), ['up-dismiss' => '']);
+					}
+					break;
+				}
+
 				$this->session->set_flashdata('bookings', msgbox('info', $msg));
 
 				$uri = $_SESSION['return_uri'] ?? 'bookings';
@@ -517,9 +561,6 @@ class Bookings extends MY_Controller
 				unset($_SESSION['return_uri']);
 				redirect(site_url($uri));
 				return;
-
-				break;
-
 			default:
 				$view = msgbox('error', lang('booking.error.bad_form'));
 		}
@@ -529,6 +570,14 @@ class Bookings extends MY_Controller
 		$this->data['body'] = $this->load->view('bookings/cancel_multi', $this->data, TRUE);
 
 		return $this->render();
+	}
+
+	/** Load fallback messages without replacing the active booking translations. */
+	private function load_cancellation_messages()
+	{
+		$defaults = $this->lang->load('booking_cancel_multi', 'english', TRUE);
+		$translations = $this->lang->load_from_db('booking_cancel_multi', config_item('language'));
+		$this->lang->language += array_merge($defaults, $translations);
 	}
 
 

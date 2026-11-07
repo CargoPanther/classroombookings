@@ -64,7 +64,9 @@ foreach ($slot->instances as $key => $instance) {
 	// Default value
 	$hidden_html = form_hidden($field_name, 'do_not_book');
 
-	if (empty($instance['can_book'])) {
+	if (empty($instance['date_eligible'])) {
+		$actions_html = '<div class="hint">' . html_escape(lang('booking.error.no_permission_room_date')) . '</div>';
+	} elseif (empty($instance['can_book'])) {
 		$booking = $instance['booking'] ?? null;
 		$hidden = $booking
 			? form_hidden(sprintf('dates[%d][%s][replace_booking_id]', $slot->mbs_id, $date_ymd), $booking->booking_id)

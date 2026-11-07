@@ -142,13 +142,13 @@ class Multi_booking_model extends CI_Model
 			//
 
 			$today = (new \DateTime())->setTime(0, 0, 0);
-			$min_date = clone $today;
+			$min_date = null;
 			if (!is_null($min_days)) {
-				$min_date = $min_date->modify("+{$min_days} days");
+				$min_date = (clone $today)->modify("+{$min_days} days");
 			}
 
 			if (is_null($max_days)) {
-				$session = $this->CI->sessions_model->get($mb->session_id);
+				$session = $this->sessions_model->get($mb->session_id);
 				$max_date = clone $session->date_end;
 			} else {
 				$max_date = clone $today;
@@ -171,7 +171,7 @@ class Multi_booking_model extends CI_Model
 			$constraint_applied = false;
 
 			if ($constraint_check) {
-				if ($row->datetime < $min_date) $constraint_applied = true;
+				if ($min_date !== null && $row->datetime < $min_date) $constraint_applied = true;
 				if ($row->datetime > $max_date) $constraint_applied = true;
 			}
 

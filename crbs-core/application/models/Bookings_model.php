@@ -44,6 +44,60 @@ class Bookings_model extends CI_Model
 	}
 
 
+	/**
+	 * Execute one atomic model operation. A nested success is provisional: the
+	 * caller still owns the outer transaction and must check its final commit.
+	 */
+	public function booking_transaction(callable $operation)
+	{
+		$nested = $this->db->trans_active();
+		$savepoint = NULL;
+		if ($nested) {
+			static $sequence = 0;
+			$savepoint = 'crbs_booking_' . ++$sequence;
+			if ( ! $this->db->query('SAVEPOINT ' . $savepoint, FALSE, FALSE)) return FALSE;
+		} elseif ( ! $this->db->trans_begin()) {
+			return FALSE;
+		}
+
+		$finished = FALSE;
+		try {
+			$result = $operation();
+			if ( ! $result || ! $this->db->trans_status()) return FALSE;
+			if ($nested) {
+				if ( ! $this->db->query('RELEASE SAVEPOINT ' . $savepoint, FALSE, FALSE)) return FALSE;
+			} elseif ( ! $this->db->trans_commit()) {
+				return FALSE;
+			}
+			$finished = TRUE;
+			return $result;
+		} finally {
+			if ( ! $finished) {
+				if ($nested) {
+					try {
+						$rolled_back = $this->db->query('ROLLBACK TO SAVEPOINT ' . $savepoint, FALSE, FALSE);
+					} catch (Throwable $e) {
+						$rolled_back = FALSE;
+					}
+					if ($rolled_back) $this->db->query('RELEASE SAVEPOINT ' . $savepoint, FALSE, FALSE);
+					if ( ! $rolled_back) {
+						// A failed savepoint rollback cannot be allowed to leave partial
+						// writes for an unwitting caller to commit.
+						while ($this->db->trans_active()) {
+							if ( ! $this->db->trans_rollback()) {
+								throw new RuntimeException('Unable to roll back booking transaction');
+							}
+						}
+						throw new RuntimeException('Unable to roll back booking savepoint; outer transaction rolled back');
+					}
+				} elseif ($this->db->trans_active() && ! $this->db->trans_rollback()) {
+					throw new RuntimeException('Unable to roll back booking transaction');
+				}
+			}
+		}
+	}
+
+
 	public function include($objects)
 	{
 		if ( ! is_array($objects)) {
@@ -540,7 +594,7 @@ class Bookings_model extends CI_Model
 			'SELECT capacity FROM rooms WHERE room_id = ? FOR UPDATE',
 			[$data['room_id']]
 		);
-		$room = $room_query->row();
+		$room = $room_query ? $room_query->row() : FALSE;
 		if ( ! $room) throw BookingValidationException::forCapacityExceeded();
 
 		$room_capacity = max(1, (int) $room->capacity);
@@ -564,13 +618,17 @@ class Bookings_model extends CI_Model
 				$duplicate_sql .= ' AND booking_id NOT IN (' . implode(',', array_fill(0, count($exclude_booking_ids), '?')) . ')';
 				$duplicate_bindings = array_merge($duplicate_bindings, $exclude_booking_ids);
 			}
-			$duplicate = $this->db->query($duplicate_sql, $duplicate_bindings)->row();
+			$duplicate_query = $this->db->query($duplicate_sql . ' FOR UPDATE', $duplicate_bindings);
+			if ( ! $duplicate_query) throw BookingValidationException::forCapacityExceeded();
+			$duplicate = $duplicate_query->row();
 			if ($duplicate) {
 				throw BookingValidationException::forDuplicateUserBooking();
 			}
 		}
 
-		$sql = 'SELECT COALESCE(SUM(capacity), 0) AS booked_capacity
+		// A locking read sees the latest committed rows even when the caller has
+		// already established a REPEATABLE READ snapshot in an outer transaction.
+		$sql = 'SELECT capacity
 				FROM bookings
 				WHERE `date` = ? AND period_id = ? AND room_id = ? AND status = ?';
 		$bindings = [$data['date'], $data['period_id'], $data['room_id'], self::STATUS_BOOKED];
@@ -580,8 +638,12 @@ class Bookings_model extends CI_Model
 			$bindings = array_merge($bindings, $exclude_booking_ids);
 		}
 
-		$query = $this->db->query($sql, $bindings);
-		$booked_capacity = (int) $query->row()->booked_capacity;
+		$query = $this->db->query($sql . ' FOR UPDATE', $bindings);
+		if ( ! $query) throw BookingValidationException::forCapacityExceeded();
+		$booked_capacity = 0;
+		foreach ($query->result() as $existing) {
+			$booked_capacity += max(1, (int) $existing->capacity);
+		}
 		if ($booked_capacity + $capacity > $room_capacity) {
 			throw BookingValidationException::forCapacityExceeded();
 		}
@@ -594,138 +656,149 @@ class Bookings_model extends CI_Model
 	{
 		$this->error = FALSE;
 		$data = $this->sleep_values($data);
-		$data['capacity'] = isset($data['capacity']) ? (int) $data['capacity'] : 1;
+		$data['capacity'] = $data['capacity'] ?? 1;
 		$data['_identity_creator_id'] = $this->userauth->user->user_id;
 
-		$this->db->trans_begin();
-		try {
-			$this->validate_booking($data);
-		} catch (BookingValidationException $e) {
-			$this->error = $e->getMessage();
-			$this->db->trans_rollback();
-			return FALSE;
-		}
+		return $this->booking_transaction(function () use ($data) {
+			try {
+				$this->validate_booking($data);
+			} catch (BookingValidationException $e) {
+				$this->error = $e->getMessage();
+				return FALSE;
+			}
+			$data['capacity'] = (int) $data['capacity'];
+			$data['created_at'] = date('Y-m-d H:i:s');
+			$data['created_by'] = $this->userauth->user->user_id;
+			unset($data['_identity_creator_id']);
 
-		$data['created_at'] = date('Y-m-d H:i:s');
-		$data['created_by'] = $this->userauth->user->user_id;
-		unset($data['_identity_creator_id']);
-
-		$ins = $this->db->insert($this->table, $data);
-		if ( ! $ins) {
-			$this->db->trans_rollback();
-			return FALSE;
-		}
-
-		$id = $this->db->insert_id();
-		$success = $this->db->trans_status();
-		$this->db->trans_commit();
-
-		return ($success && $id) ? $id : FALSE;
+			if ( ! $this->db->insert($this->table, $data)) return FALSE;
+			$id = $this->db->insert_id();
+			return $id ?: FALSE;
+		});
 	}
 
 
-	public function update($booking_id, $data, $edit_mode = UpdateAgent::EDIT_ONE)
+	/** The optional expected booking is the snapshot used to authorise the edit. */
+	public function update($booking_id, $data, $edit_mode = UpdateAgent::EDIT_ONE, $expected_booking = NULL)
 	{
+		$this->error = FALSE;
+		if ( ! in_array($edit_mode, [UpdateAgent::EDIT_ONE, UpdateAgent::EDIT_FUTURE, UpdateAgent::EDIT_ALL], TRUE)) return FALSE;
+		$booking = $expected_booking ?: $this->get($booking_id);
+		if ( ! $booking || (int) $booking->booking_id !== (int) $booking_id || $booking->status != self::STATUS_BOOKED) return FALSE;
+		$series = $edit_mode !== UpdateAgent::EDIT_ONE;
+		if ($series && empty($booking->repeat_id)) return FALSE;
+
+		$allowed = $series ? ['user_id', 'department_id', 'notes'] : ['date', 'period_id', 'room_id', 'user_id', 'department_id', 'notes', 'capacity'];
+		if (array_diff(array_keys($data), $allowed)) return FALSE;
 		$data = $this->sleep_values($data);
+		$date = $booking->date->format('Y-m-d');
+
+		return $this->booking_transaction(function () use ($booking_id, $data, $edit_mode, $booking, $series, $date) {
+		// Discover rooms before taking locks. Recheck the locked rows below: a
+		// snapshot that missed a moved/new instance must never be used to write.
+		$rooms = [(int) $booking->room_id];
+		if (isset($data['room_id'])) $rooms[] = (int) $data['room_id'];
+		$series_sql = 'SELECT * FROM bookings WHERE repeat_id = ? AND session_id = ?';
+		$series_bind = [$booking->repeat_id, $booking->session_id];
+		if ($edit_mode === UpdateAgent::EDIT_FUTURE) {
+			$series_sql .= ' AND `date` >= ?';
+			$series_bind[] = $date;
+		}
+		if ($series) {
+			$query = $this->db->query($series_sql, $series_bind);
+			if ( ! $query) {
+				return FALSE;
+			}
+			foreach ($query->result() as $row) $rooms[] = (int) $row->room_id;
+		}
+		$rooms = array_values(array_unique($rooms));
+		sort($rooms, SORT_NUMERIC);
+		foreach ($rooms as $room_id) {
+			$query = $this->db->query('SELECT room_id FROM rooms WHERE room_id = ? FOR UPDATE', [$room_id]);
+			if ( ! $query || ! $query->row()) {
+				return FALSE;
+			}
+		}
+
+		$query = $this->db->query('SELECT * FROM bookings WHERE booking_id = ? FOR UPDATE', [$booking_id]);
+		$current = $query ? $query->row() : FALSE;
+		if ( ! $current || ! $this->matches_edit_snapshot($current, $booking)) {
+			return FALSE;
+		}
+		$query = $series ? $this->db->query($series_sql . ' ORDER BY booking_id FOR UPDATE', $series_bind) : NULL;
+		if ($series && ! $query) {
+			return FALSE;
+		}
+		$rows = $series ? $query->result() : [$current];
+		$targets = [];
+		try {
+			foreach ($rows as $row) {
+				if ($row->status != self::STATUS_BOOKED) continue;
+				if ( ! in_array((int) $row->room_id, $rooms, TRUE) || ! $this->can_edit_row($row, $data)) {
+					return FALSE;
+				}
+				$target = array_merge((array) $row, $data, ['_identity_creator_id' => $row->created_by]);
+				$identity_changed = $target['date'] != $row->date
+					|| (int) $target['period_id'] !== (int) $row->period_id
+					|| (int) $target['room_id'] !== (int) $row->room_id
+					|| (int) ($target['user_id'] ?? 0) !== (int) ($row->user_id ?? 0);
+				if ( ! $series || $identity_changed) {
+					$this->validate_booking($target, [(int) $row->booking_id], $identity_changed);
+				}
+				if ($series && $identity_changed) {
+					$key = implode(':', [$target['date'], $target['period_id'], $target['room_id'], $target['user_id'] ?: $target['_identity_creator_id']]);
+					if (isset($targets[$key])) throw BookingValidationException::forDuplicateUserBooking();
+					$targets[$key] = TRUE;
+				}
+			}
+		} catch (BookingValidationException $e) {
+			$this->error = $e->getMessage();
+			return FALSE;
+		}
 
 		$data['updated_at'] = date('Y-m-d H:i:s');
 		$data['updated_by'] = $this->userauth->user->user_id;
-
-		switch ($edit_mode) {
-
-			case UpdateAgent::EDIT_ONE:
-
-				$booking = $this->get($booking_id);
-				if ( ! $booking || $booking->status != self::STATUS_BOOKED) return FALSE;
-				$target = array_merge([
-					'date' => $booking->date->format('Y-m-d'),
-					'period_id' => $booking->period_id,
-					'room_id' => $booking->room_id,
-					'user_id' => $booking->user_id,
-					'capacity' => $booking->capacity ?? 1,
-					'_identity_creator_id' => $booking->created_by ?? $this->userauth->user->user_id,
-				], $data);
-				$identity_changed = (
-					$target['date'] != $booking->date->format('Y-m-d')
-					|| (int) $target['period_id'] !== (int) $booking->period_id
-					|| (int) $target['room_id'] !== (int) $booking->room_id
-					|| (int) ($target['user_id'] ?? 0) !== (int) ($booking->user_id ?? 0)
-				);
-
-				$this->db->trans_begin();
-				$this->db->query('SELECT room_id FROM rooms WHERE room_id = ? FOR UPDATE', [$booking->room_id]);
-				try {
-					$this->validate_booking($target, [(int) $booking_id], $identity_changed);
-				} catch (BookingValidationException $e) {
-					$this->error = $e->getMessage();
-					$this->db->trans_rollback();
-					return FALSE;
-				}
-
-				$where = [
-					'booking_id' => $booking_id,
-				];
-				$updated = $this->db->update($this->table, $data, $where, 1);
-				$success = $updated && $this->db->trans_status();
-				if ($success) {
-					$this->db->trans_commit();
-				} else {
-					$this->db->trans_rollback();
-				}
-				return $success;
-
+		$success = TRUE;
+		foreach ($rows as $row) {
+			if ($row->status != self::STATUS_BOOKED) continue;
+			if ( ! $this->db->update($this->table, $data, ['booking_id' => $row->booking_id], 1)) {
+				$success = FALSE;
 				break;
-
-			case UpdateAgent::EDIT_FUTURE:
-
-				$booking = $this->get($booking_id);
-
-				$where = [
-					'repeat_id' => $booking->repeat_id,
-					'session_id' => $booking->session_id,
-					'date >=' => $booking->date->format('Y-m-d'),
-				];
-
-				return $this->db->update($this->table, $data, $where);
-
-				break;
-
-			case UpdateAgent::EDIT_ALL:
-
-				$booking = $this->get($booking_id);
-
-				$where = [
-					'repeat_id' => $booking->repeat_id,
-					'session_id' => $booking->session_id,
-				];
-
-				$update_bk = $this->db->update($this->table, $data, $where);
-
-				// Update repeat table with data
-				$repeat_keys = [
-					'user_id',
-					'department_id',
-					'notes',
-					'updated_at',
-					'updated_by',
-				];
-
-				// Ensure we only send valid data to repeat table
-				$repeat_data = [];
-				foreach ($repeat_keys as $k) {
-					if (isset($data[$k])) {
-						$repeat_data[$k] = $data[$k];
-					}
-				}
-
-				$update_rep = $this->db->update('bookings_repeat', $repeat_data, $where);
-
-				return ($update_bk && $update_rep);
-
-				break;
+			}
 		}
+		if ($success && $edit_mode === UpdateAgent::EDIT_ALL) {
+			$where = ['repeat_id' => $booking->repeat_id, 'session_id' => $booking->session_id];
+			$repeat = $this->db->query('SELECT repeat_id FROM bookings_repeat WHERE repeat_id = ? AND session_id = ? FOR UPDATE', array_values($where));
+			$success = $repeat && $repeat->row() && $this->db->update('bookings_repeat', $data, $where, 1);
+		}
+		return (bool) $success;
+		});
+	}
 
-		return FALSE;
+	private function matches_edit_snapshot($row, $booking)
+	{
+		if ($row->status != self::STATUS_BOOKED || $row->date !== $booking->date->format('Y-m-d')) return FALSE;
+		foreach (['booking_id', 'repeat_id', 'session_id', 'period_id', 'room_id', 'user_id', 'created_by', 'capacity', 'department_id', 'notes', 'updated_at', 'updated_by'] as $field) {
+			$actual = $row->$field ?? NULL;
+			$expected = $booking->$field ?? NULL;
+			if (($actual === NULL) !== ($expected === NULL) || ($actual !== NULL && (string) $actual !== (string) $expected)) return FALSE;
+		}
+		return TRUE;
+	}
+
+	private function can_edit_row($row, array $data)
+	{
+		if ( ! booking_editable($row)) return FALSE;
+		$recurring = ! empty($row->repeat_id);
+		$owner = $row->user_id == $this->userauth->user->user_id;
+		$notes_permission = $recurring ? Permission::BK_RECUR_VIEW_OTHER_NOTES : Permission::BK_SGL_VIEW_OTHER_NOTES;
+		$user_permission = $recurring ? Permission::BK_RECUR_VIEW_OTHER_USERS : Permission::BK_SGL_VIEW_OTHER_USERS;
+		$set_user = $recurring ? Permission::BK_RECUR_SET_USER : Permission::BK_SGL_SET_USER;
+		$set_dept = $recurring ? Permission::BK_RECUR_SET_DEPT : Permission::BK_SGL_SET_DEPT;
+		if (array_key_exists('notes', $data) && ! $owner && ! has_permission($notes_permission, $row->room_id)) return FALSE;
+		if (array_key_exists('user_id', $data) && (! has_permission($user_permission, $row->room_id) || ! has_permission($set_user, $row->room_id))) return FALSE;
+		if (array_key_exists('department_id', $data) && ! has_permission($set_dept, $row->room_id)) return FALSE;
+		return TRUE;
 	}
 
 
@@ -735,13 +808,22 @@ class Bookings_model extends CI_Model
 	 */
 	public function cancel_single($booking_id)
 	{
-		$data = [
-			'status' => self::STATUS_CANCELLED,
-			'cancelled_at' => date('Y-m-d H:i:s'),
-			'cancelled_by' => $this->userauth->user->user_id,
-		];
+		return $this->booking_transaction(function () use ($booking_id) {
+			$query = $this->db->query('SELECT b.*, p.time_end FROM bookings b JOIN periods p ON p.period_id = b.period_id WHERE b.booking_id = ? FOR UPDATE', [$booking_id]);
+			$row = $query ? $query->row() : FALSE;
+			if ( ! $row || $row->status != self::STATUS_BOOKED) return FALSE;
+			$row->time_end = datetime_from_string($row->date . ' ' . $row->time_end);
+			$row->date = datetime_from_string($row->date);
+			if ( ! booking_cancelable($row)) return FALSE;
 
-		return $this->db->update($this->table, $data, ['booking_id' => $booking_id], 1);
+			$data = [
+				'status' => self::STATUS_CANCELLED,
+				'cancelled_at' => date('Y-m-d H:i:s'),
+				'cancelled_by' => $this->userauth->user->user_id,
+			];
+			$where = ['booking_id' => $booking_id, 'status' => self::STATUS_BOOKED];
+			return $this->db->update($this->table, $data, $where, 1) && $this->db->affected_rows() === 1;
+		});
 	}
 
 
@@ -751,31 +833,73 @@ class Bookings_model extends CI_Model
 	 */
 	public function cancel_future($booking_id)
 	{
-		$booking = $this->get($booking_id);
-
-		if ( ! $booking->repeat_id) return FALSE;
-
-		$data = [
-			'status' => self::STATUS_CANCELLED,
-			'cancelled_at' => date('Y-m-d H:i:s'),
-			'cancelled_by' => $this->userauth->user->user_id,
-		];
-
-		$where = [
-			'repeat_id' => $booking->repeat_id,
-			'session_id' => $booking->session_id,
-			'date >=' => $booking->date->format('Y-m-d'),
-		];
-
-		return $this->db->update($this->table, $data, $where);
+		return $this->cancel_series($booking_id, TRUE);
 	}
 
 
 	public function cancel_all($booking_id)
 	{
-		$booking = $this->get($booking_id);
+		return $this->cancel_series($booking_id, FALSE);
+	}
 
-		if ( ! $booking->repeat_id) return FALSE;
+	private function cancel_series($booking_id, $future)
+	{
+		$booking = $this->get($booking_id);
+		if ( ! $booking || empty($booking->repeat_id) || $booking->status != self::STATUS_BOOKED) return FALSE;
+		return $this->booking_transaction(function () use ($booking_id, $future, $booking) {
+		$sql = 'SELECT b.*, p.time_start, p.time_end FROM bookings b JOIN periods p ON p.period_id = b.period_id WHERE b.repeat_id = ? AND b.session_id = ?';
+		$bindings = [$booking->repeat_id, $booking->session_id];
+		if ($future) {
+			$sql .= ' AND b.date >= ?';
+			$bindings[] = $booking->date->format('Y-m-d');
+		}
+		$rooms = [];
+		$query = $this->db->query($sql, $bindings);
+		if ( ! $query) {
+			return FALSE;
+		}
+		foreach ($query->result() as $row) $rooms[] = (int) $row->room_id;
+		$rooms[] = (int) $booking->room_id;
+		$rooms = array_values(array_unique($rooms));
+		sort($rooms, SORT_NUMERIC);
+		foreach ($rooms as $room_id) {
+			$room = $this->db->query('SELECT room_id FROM rooms WHERE room_id = ? FOR UPDATE', [$room_id]);
+			if ( ! $room || ! $room->row()) {
+				return FALSE;
+			}
+		}
+		$current = $this->db->query('SELECT * FROM bookings WHERE booking_id = ? FOR UPDATE', [$booking_id]);
+		if ( ! $current || ! $current->row() || ! $this->matches_edit_snapshot($current->row(), $booking)) {
+			return FALSE;
+		}
+		$query = $this->db->query($sql . ' ORDER BY b.booking_id FOR UPDATE', $bindings);
+		if ( ! $query) {
+			return FALSE;
+		}
+		$rows = $query->result();
+		$target_ids = [];
+		foreach ($rows as $row) {
+			if ($row->status != self::STATUS_BOOKED) continue;
+			if ( ! in_array((int) $row->room_id, $rooms, TRUE)) {
+				return FALSE;
+			}
+			$row->time_end = datetime_from_string($row->date . ' ' . $row->time_end);
+			$row->date = datetime_from_string($row->date);
+			if ( ! booking_cancelable($row)) {
+				// The helper checks the time before room-level permission. Check
+				// permission independently so a past row cannot hide a denial.
+				$now = new DateTime();
+				$today = (clone $now)->setTime(0, 0, 0);
+				$past = ($row->time_end instanceof DateTime && $now > $row->time_end)
+					|| ($row->date instanceof DateTime && $row->date < $today);
+				$authorized = $row->user_id == $this->userauth->user->user_id
+					|| has_permission(Permission::BK_RECUR_CANCEL_OTHER, $row->room_id);
+				if ( ! $future && $past && $authorized && (int) $row->booking_id !== (int) $booking_id) continue;
+				return FALSE;
+			}
+			$target_ids[] = (int) $row->booking_id;
+		}
+		if ( ! in_array((int) $booking_id, $target_ids, TRUE)) return FALSE;
 
 		$data = [
 			'status' => self::STATUS_CANCELLED,
@@ -783,16 +907,20 @@ class Bookings_model extends CI_Model
 			'cancelled_by' => $this->userauth->user->user_id,
 		];
 
-		$where = [
-			'repeat_id' => $booking->repeat_id,
-			'session_id' => $booking->session_id,
-		];
-
-		$update1 = $this->db->update($this->table, $data, $where);
-
-		$update2 = $this->db->update('bookings_repeat', $data, $where, 1);
-
-		return ($update1 && $update2);
+		$success = TRUE;
+		foreach ($target_ids as $target_id) {
+			if ( ! $this->db->update($this->table, $data, ['booking_id' => $target_id], 1)) {
+				$success = FALSE;
+				break;
+			}
+		}
+		if ($success && ! $future) {
+			$where = ['repeat_id' => $booking->repeat_id, 'session_id' => $booking->session_id];
+			$repeat = $this->db->query('SELECT repeat_id FROM bookings_repeat WHERE repeat_id = ? AND session_id = ? FOR UPDATE', array_values($where));
+			$success = $repeat && $repeat->row() && $this->db->update('bookings_repeat', $data, $where, 1);
+		}
+		return (bool) $success;
+		});
 	}
 
 

@@ -78,13 +78,13 @@ class UpdateAgent extends BaseAgent
 		if (!empty($schedule)) {
 
 			// Load the list of available periods and rooms
-			$this->all_periods = $this->CI->periods_model->filtered([
+			$this->all_periods = (array) $this->CI->periods_model->filtered([
 				'schedule_id' => $schedule->schedule_id,
 				'bookable' => 1,
 			]);
 
 			if (!empty($this->booking->room->room_group_id)) {
-				$this->all_rooms = $this->CI->rooms_model->get_bookable_rooms([
+				$this->all_rooms = (array) $this->CI->rooms_model->get_bookable_rooms([
 					'user_id' => $this->user->user_id,
 					'room_group_id' => $this->booking->room->room_group_id,
 				]);
@@ -96,6 +96,10 @@ class UpdateAgent extends BaseAgent
 		// This flag helps determine what fields can be edited (important for recurring bookings selection)
 		// Options are single, future, or all.
 		$this->edit_mode = $this->CI->input->post_get('edit') ?: self::EDIT_ONE;
+		if ( ! in_array($this->edit_mode, [self::EDIT_ONE, self::EDIT_FUTURE, self::EDIT_ALL], TRUE)
+			|| ($this->edit_mode !== self::EDIT_ONE && empty($this->booking->repeat_id))) {
+			throw AgentException::forAccessDenied();
+		}
 
 		$is_booking_owner = ($this->booking->user_id == $this->user->user_id);
 		if ($this->booking->repeat_id) {
@@ -210,7 +214,22 @@ class UpdateAgent extends BaseAgent
 		$booking_data = [];
 
 		if ($this->features[self::FEATURE_DATE]) {
-			$booking_data['date'] = $this->CI->input->post('booking_date');
+			$value = $this->CI->input->post('booking_date');
+			// The edit form uses day/month/year; ISO dates are also accepted by
+			// the existing date helper and model. Reject rollover and free-form dates.
+			if (is_string($value) && preg_match('/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/D', $value, $parts)) {
+				$valid = checkdate((int) $parts[2], (int) $parts[1], (int) $parts[3]);
+			} elseif (is_string($value) && preg_match('/^(\d{4})-(\d{2})-(\d{2})$/D', $value, $parts)) {
+				$valid = checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1]);
+			} else {
+				$valid = FALSE;
+			}
+			$date = $valid ? datetime_from_string($value) : FALSE;
+			if ( ! $date) {
+				$this->message = lang('app.form_error');
+				return FALSE;
+			}
+			$booking_data['date'] = $date->format('Y-m-d');
 		}
 
 		if ($this->features[self::FEATURE_PERIOD]) {
@@ -237,9 +256,49 @@ class UpdateAgent extends BaseAgent
 			$booking_data['capacity'] = (int) $this->CI->input->post('capacity');
 		}
 
-		$update = $this->CI->bookings_model->update($this->booking->booking_id, $booking_data, $this->edit_mode);
+		if ($this->edit_mode === self::EDIT_ONE && ! $this->valid_destination($booking_data)) {
+			$this->message = lang('booking.edit.error');
+			return FALSE;
+		}
 
-		if ($update) {
+		// Own the outer transaction: CI nested commits do not commit, and nested
+		// rollbacks do not undo writes. Lock the original creator before rooms,
+		// in the same order as single-booking creation.
+		if ($this->CI->db->trans_active() || ! $this->CI->db->trans_begin()) {
+			$this->message = lang('booking.edit.error');
+			return FALSE;
+		}
+		$committed = FALSE;
+		try {
+			$creator = (int) ($this->booking->created_by ?? 0);
+			if ($this->edit_mode === self::EDIT_ONE && empty($this->booking->repeat_id) && $creator > 0) {
+				$before = (array) $this->booking;
+				$before['date'] = $this->booking->date->format('Y-m-d');
+				$after = array_merge($before, $booking_data);
+				$quota = $this->CI->users_model->lock_scheduled_booking_quota($creator, [$after], [$before]);
+				if ($quota === FALSE) {
+					$this->message = lang('booking.edit.error');
+					return FALSE;
+				}
+				$limit = $this->CI->users_model->get_constraints($creator)['max_active_bookings'];
+				if ($limit !== NULL && $quota['requested'] > 0 && $quota['count'] + $quota['requested'] > (int) $limit) {
+					$this->message = lang('booking.error.must_select_fewer');
+					return FALSE;
+				}
+			}
+			$update = $this->CI->bookings_model->update($this->booking->booking_id, $booking_data, $this->edit_mode, $this->booking);
+			if ($update && $this->CI->db->trans_status()) $committed = $this->CI->db->trans_commit();
+		} finally {
+			// An unexpected exception inside a nested model may leave its CI
+			// depth open; unwind all levels owned by this agent.
+			if ( ! $committed) {
+				while ($this->CI->db->trans_active()) {
+					if ( ! $this->CI->db->trans_rollback()) break;
+				}
+			}
+		}
+
+		if ($committed) {
 
 			$msgs = [
 				self::EDIT_ONE => lang('booking.edit.one.success'),
@@ -261,13 +320,84 @@ class UpdateAgent extends BaseAgent
 		return FALSE;
 	}
 
+	private function valid_destination(array $data)
+	{
+		$room_id = $data['room_id'] ?? $this->booking->room_id;
+		$period_id = $data['period_id'] ?? $this->booking->period_id;
+		$date = isset($data['date']) ? datetime_from_string($data['date']) : $this->booking->date;
+		if ( ! $date) return FALSE;
+		$date_string = $date->format('Y-m-d');
+		$moved = $date_string !== $this->booking->date->format('Y-m-d')
+			|| (int) $room_id !== (int) $this->booking->room_id
+			|| (int) $period_id !== (int) $this->booking->period_id;
+		// Do not prevent metadata-only edits of existing, now-unbookable slots.
+		if ( ! $moved) return TRUE;
+
+		$room = $this->CI->rooms_model->get_bookable_rooms([
+			'user_id' => $this->user->user_id,
+			'room_id' => $room_id,
+		]);
+		if ( ! $room || empty($room->room_group_id)
+			|| (int) $room->room_group_id !== (int) $this->booking->room->room_group_id) return FALSE;
+
+		$recurring = ! empty($this->booking->repeat_id);
+		$create_permission = $recurring ? Permission::BK_RECUR_CREATE : Permission::BK_SGL_CREATE;
+		if ( ! has_permission($create_permission, $room_id)) return FALSE;
+
+		// A move must not transfer source-room assignment privileges to the destination.
+		if (array_key_exists('user_id', $data) && (int) $data['user_id'] !== (int) $this->booking->user_id) {
+			$view = $recurring ? Permission::BK_RECUR_VIEW_OTHER_USERS : Permission::BK_SGL_VIEW_OTHER_USERS;
+			$set = $recurring ? Permission::BK_RECUR_SET_USER : Permission::BK_SGL_SET_USER;
+			if ( ! has_permission($view, $room_id) || ! has_permission($set, $room_id)) return FALSE;
+		}
+		if (array_key_exists('department_id', $data) && (int) $data['department_id'] !== (int) $this->booking->department_id) {
+			$set = $recurring ? Permission::BK_RECUR_SET_DEPT : Permission::BK_SGL_SET_DEPT;
+			if ( ! has_permission($set, $room_id)) return FALSE;
+		}
+		if (array_key_exists('notes', $data) && (string) $data['notes'] !== (string) ($this->booking->notes ?? '')
+			&& (int) $this->booking->user_id !== (int) $this->user->user_id) {
+			$view = $recurring ? Permission::BK_RECUR_VIEW_OTHER_NOTES : Permission::BK_SGL_VIEW_OTHER_NOTES;
+			$edit = $recurring ? Permission::BK_RECUR_EDIT_OTHER : Permission::BK_SGL_EDIT_OTHER;
+			if ( ! has_permission($view, $room_id) || ! has_permission($edit, $room_id)) return FALSE;
+		}
+
+		$schedule = $this->CI->schedules_model->get_applied_schedule($this->booking->session_id, $room->room_group_id);
+		$period = $this->CI->periods_model->get($period_id);
+		$day = 'day_' . $date->format('N');
+		if ( ! $schedule || ! $period || empty($period->bookable)
+			|| (int) $period->schedule_id !== (int) $schedule->schedule_id || empty($period->$day)) return FALSE;
+
+		$date_info = $this->CI->dates_model->get_by_date($date_string);
+		if ( ! $date_info || (int) $date_info->session_id !== (int) $this->booking->session_id
+			|| empty($date_info->week_id) || ! empty($date_info->holiday_id)) return FALSE;
+
+		$today = (new \DateTime())->setTime(0, 0, 0);
+		$start = $this->session->date_start->format('Y-m-d');
+		$end = $this->session->date_end->format('Y-m-d');
+		if ( ! empty($this->session->is_current) && ! has_permission(Permission::BK_SGL_CREATE)
+			&& ! has_permission(Permission::BK_RECUR_CREATE)) {
+			$start = max($start, $today->format('Y-m-d'));
+		}
+		if ($date_string < $start || $date_string > $end) return FALSE;
+
+		// Notice constraints apply to one-time bookings, not recurring series.
+		if ( ! $recurring) {
+			$constraints = $this->CI->users_model->get_constraints($this->user->user_id);
+			$min = $constraints['range_min'] ?? NULL;
+			$max = $constraints['range_max'] ?? NULL;
+			if ($min !== NULL && $date_string < (clone $today)->modify(sprintf('%+d days', (int) $min))->format('Y-m-d')) return FALSE;
+			if ($max !== NULL && $date_string > (clone $today)->modify(sprintf('%+d days', (int) $max))->format('Y-m-d')) return FALSE;
+		}
+		return TRUE;
+	}
+
 
 	private function get_validation_rules($booking_id)
 	{
 		$rules = [];
 
 		if ($this->features[self::FEATURE_DATE]) {
-			$rules[] = ['field' => 'booking_date', 'label' => 'lang:app.date', 'rules' => sprintf('required|valid_date|no_conflict[%d]', $booking_id)];
+			$rules[] = ['field' => 'booking_date', 'label' => 'lang:app.date', 'rules' => 'required|valid_date'];
 		}
 
 		if ($this->features[self::FEATURE_PERIOD]) {

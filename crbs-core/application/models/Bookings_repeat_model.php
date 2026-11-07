@@ -50,16 +50,29 @@ class Bookings_repeat_model extends CI_Model
 		if (empty($dates)) return FALSE;
 
 		unset($data['dates']);
-		$this->db->trans_begin();
+		return $this->bookings_model->booking_transaction(function () use ($data, $dates) {
+			return $this->create_instances($data, $dates);
+		});
+	}
 
+	private function create_instances($data, $dates)
+	{
 		$data = $this->sleep_values($data);
+		$capacity = filter_var($data['capacity'] ?? 1, FILTER_VALIDATE_INT);
+		if ($capacity === FALSE || $capacity < 1) {
+			return FALSE;
+		}
+		$data['capacity'] = $capacity;
+		$room = $this->db->query('SELECT room_id FROM rooms WHERE room_id = ? FOR UPDATE', [$data['room_id'] ?? NULL]);
+		if ( ! $room || ! $room->row()) {
+			return FALSE;
+		}
 
 		$data['created_at'] = date('Y-m-d H:i:s');
 		$data['created_by'] = $this->userauth->user->user_id;
 
 		$ins = $this->db->insert($this->table, $data);
 		if ( ! $ins) {
-			$this->db->trans_rollback();
 			return FALSE;
 		}
 
@@ -83,7 +96,7 @@ class Bookings_repeat_model extends CI_Model
 
 		foreach ($dates as $date => $info) {
 
-			$action = $info['action'];
+			$action = $info['action'] ?? NULL;
 
 			// Skip ones that shouldn't be booked
 			if ($action == 'do_not_book') continue;
@@ -92,30 +105,35 @@ class Bookings_repeat_model extends CI_Model
 			if ($action == 'replace') {
 				// Get ID of existing booking to replace
 				$replace_booking_id = $info['replace_booking_id'] ?? NULL;
-				$this->bookings_model->cancel_single($replace_booking_id);
+				$query = $this->db->query('SELECT b.*, p.time_end FROM bookings b JOIN periods p ON p.period_id = b.period_id WHERE b.booking_id = ? FOR UPDATE', [$replace_booking_id]);
+				$existing = $query ? $query->row() : FALSE;
+				if ( ! $existing || $existing->status != Bookings_model::STATUS_BOOKED
+					|| $existing->date !== $date || (int) $existing->period_id !== (int) $booking_data['period_id']
+					|| (int) $existing->room_id !== (int) $booking_data['room_id']) {
+					return FALSE;
+				}
+				$existing->time_end = datetime_from_string($existing->date . ' ' . $existing->time_end);
+				$existing->date = datetime_from_string($existing->date);
+				if ( ! booking_cancelable($existing) || ! $this->bookings_model->cancel_single($replace_booking_id)) {
+					return FALSE;
+				}
 				$action = 'book';
 			}
 
-			if ($action !== 'book') continue;
+			if ($action !== 'book') {
+				return FALSE;
+			}
 
 			// Add 'date' of instance and then create booking
 			$insert_data = array_merge($booking_data, ['date' => $date]);
 			$booking_id = $this->bookings_model->create($insert_data);
 			if ( ! $booking_id) {
-				$this->db->trans_rollback();
 				return FALSE;
 			}
 			$booking_ids[] = $booking_id;
 		}
 
-		$success = $this->db->trans_status();
-		if ($success) {
-			$this->db->trans_commit();
-		} else {
-			$this->db->trans_rollback();
-		}
-
-		return $success ? $repeat_id : FALSE;
+		return ! empty($booking_ids) ? $repeat_id : FALSE;
 	}
 
 

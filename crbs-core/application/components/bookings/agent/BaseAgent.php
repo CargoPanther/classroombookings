@@ -134,6 +134,33 @@ abstract class BaseAgent
 		return ($this->success === TRUE);
 	}
 
+	/** Revalidate a creation destination against current room and timetable data. */
+	protected function creation_slot_allowed($date, $period_id, $room_id): bool
+	{
+		$datetime = datetime_from_string($date);
+		if (!$datetime || !$this->session) return false;
+		$date_string = $datetime->format('Y-m-d');
+		$room = $this->CI->rooms_model->get_bookable_rooms([
+			'user_id' => $this->user->user_id,
+			'room_id' => $room_id,
+		]);
+		if (!$room || empty($room->room_group_id)) return false;
+		$schedule = $this->CI->schedules_model->get_applied_schedule($this->session->session_id, $room->room_group_id);
+		$period = $this->CI->periods_model->get($period_id);
+		$day = 'day_' . $datetime->format('N');
+		if (!$schedule || !$period || empty($period->bookable)
+			|| (int) $period->schedule_id !== (int) $schedule->schedule_id || empty($period->$day)) return false;
+		$date_info = $this->CI->dates_model->get_by_date($date_string);
+		if (!$date_info || (int) $date_info->session_id !== (int) $this->session->session_id
+			|| empty($date_info->week_id) || !empty($date_info->holiday_id)) return false;
+		$start = $this->session->date_start->format('Y-m-d');
+		if (!empty($this->session->is_current) && !has_permission(Permission::BK_SGL_CREATE)
+			&& !has_permission(Permission::BK_RECUR_CREATE)) {
+			$start = max($start, (new \DateTime())->format('Y-m-d'));
+		}
+		return $date_string >= $start && $date_string <= $this->session->date_end->format('Y-m-d');
+	}
+
 
 	protected function populate_departments()
 	{

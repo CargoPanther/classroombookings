@@ -400,6 +400,83 @@ class Users_model extends CI_Model
 	}
 
 
+	/**
+	 * Lock the creator before any room lock, then read the current quota and
+	 * the contribution of the proposed rows. The caller owns the transaction.
+	 * The model creating a booking sets created_by to the authenticated user.
+	 * Replaced rows are subtracted, so requested is a signed edit delta.
+	 * Returns FALSE on a database error or if the user no longer exists.
+	 */
+	public function lock_scheduled_booking_quota(int $user_id, array $rows, array $replaced_rows = [])
+	{
+		$user = $this->db->query('SELECT user_id FROM users WHERE user_id = ? FOR UPDATE', [$user_id]);
+		if ( ! $user || ! $user->row()) return FALSE;
+
+		$now = new DateTime();
+		$today = $now->format('Y-m-d');
+		$time = $now->format('H:i') . ':00';
+		// The production foreign key supplies this index. Force it so InnoDB
+		// cannot scan and lock other users' bookings via the date index. Joined
+		// locking reads would also lock rooms/periods before the ordered room locks.
+		$sql = "SELECT booking_id, date, period_id
+				FROM bookings FORCE INDEX (fk_bookings_user)
+				WHERE user_id = ?
+				AND created_by = user_id
+				AND status = 10
+				AND repeat_id IS NULL
+				AND date >= ?
+				ORDER BY booking_id FOR UPDATE";
+		$query = $this->db->query($sql, [$user_id, $today]);
+		if ( ! $query) return FALSE;
+		$bookings = $query->result_array();
+
+		// Periods and rooms are required foreign keys in the production schema.
+		// Use one consistent, non-locking view of period times for both the
+		// current bookings and the edit delta. A concurrent schedule edit can
+		// therefore be invisible to an already established transaction snapshot.
+		$periods = [];
+		$period_is_future = function ($period_id) use (&$periods, $time) {
+			$period_id = (int) $period_id;
+			if ( ! array_key_exists($period_id, $periods)) {
+				$period = $this->db->query('SELECT time_start FROM periods WHERE period_id = ?', [$period_id]);
+				if ( ! $period || ! ($period_row = $period->row())) return NULL;
+				$periods[$period_id] = $period_row->time_start;
+			}
+			return $periods[$period_id] !== NULL && $periods[$period_id] > $time;
+		};
+		$count = 0;
+		foreach ($bookings as $booking) {
+			if ($booking['date'] > $today) {
+				$count++;
+			} else {
+				$future = $period_is_future($booking['period_id']);
+				if ($future === NULL) return FALSE;
+				if ($future) $count++;
+			}
+		}
+
+		$requested = 0;
+		foreach ([$rows, $replaced_rows] as $index => $group) {
+			foreach ($group as $row) {
+				if ((int) ($row['user_id'] ?? 0) !== $user_id
+					|| (int) ($row['created_by'] ?? 0) !== $user_id
+					|| ($row['repeat_id'] ?? NULL) !== NULL
+					|| (int) ($row['status'] ?? 10) !== 10
+					|| empty($row['date'])) continue;
+				$date = $row['date'];
+				if ($date > $today) {
+					$requested += $index === 0 ? 1 : -1;
+				} elseif ($date === $today) {
+					$future = $period_is_future($row['period_id'] ?? 0);
+					if ($future === NULL) return FALSE;
+					if ($future) $requested += $index === 0 ? 1 : -1;
+				}
+			}
+		}
+		return ['count' => $count, 'requested' => $requested];
+	}
+
+
 	public function user_constraints_raw($user_id)
 	{
 		$query = $this->db->get_where('users_constraints', ['user_id' => $user_id], 1);

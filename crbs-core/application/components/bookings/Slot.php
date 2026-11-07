@@ -291,8 +291,15 @@ class Slot
 
 		$user_constraints = $this->CI->users_model->get_constraints($this->context->user->user_id);
 		$user_limit = $user_constraints['max_active_bookings'];
-		// Check for a limit
-		if ( ! is_null($user_limit)) {
+		$create_single = has_permission(Permission::BK_SGL_CREATE, $this->room->room_id);
+		$create_recur = has_permission(Permission::BK_RECUR_CREATE, $this->room->room_id);
+		$can_assign_other = has_permission(Permission::BK_SGL_SET_USER, $this->room->room_id);
+		$now = new DateTime();
+		$date = $this->datetime->format('Y-m-d');
+		$scheduled = $date > $now->format('Y-m-d')
+			|| ($date === $now->format('Y-m-d') && ($this->period->time_start ?? '') > $now->format('H:i') . ':00');
+		// Only block when every available creation path consumes this quota.
+		if ( ! is_null($user_limit) && $create_single && ! $create_recur && ! $can_assign_other && $scheduled && empty($this->bookings)) {
 			$booking_count = $this->CI->users_model->get_scheduled_booking_count($this->context->user->user_id);
 			if ($booking_count >= $user_limit) {
 				$this->continue = false;
@@ -306,9 +313,6 @@ class Slot
 
 		// Check range
 		//
-
-		$create_single = has_permission(Permission::BK_SGL_CREATE, $this->room->room_id);
-		$create_recur = has_permission(Permission::BK_RECUR_CREATE, $this->room->room_id);
 
 		$this->view_data['allow_single'] = $create_single;
 		$this->view_data['allow_recur'] = $create_recur;
@@ -343,12 +347,12 @@ class Slot
 			$min_days = $user_constraints['range_min'];
 			$max_days = $user_constraints['range_max'];
 
-			$min_date = clone $this->context->today;
+			$min_date = null;
 			if (!is_null($min_days)) {
-				$min_date = $min_date->modify("+{$min_days} days");
+				$min_date = (clone $this->context->today)->modify("+{$min_days} days");
 			}
 
-			if ($this->datetime < $min_date) {
+			if ($min_date !== null && $this->datetime < $min_date) {
 				$this->continue = false;
 				$this->status = self::STATUS_UNAVAILABLE;
 				$this->reason = self::UNAVAILABLE_RANGE_MIN;

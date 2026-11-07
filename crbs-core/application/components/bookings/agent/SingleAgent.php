@@ -137,7 +137,11 @@ class SingleAgent extends BaseAgent
 				;
 			$this->set_booking_type($booking_type);
 		}
-		if (!empty($owned_bookings) || $remaining_capacity < 1) {
+		// A submitted action determines its own mode, not the last displayed tab.
+		$action = $this->CI->input->post('action');
+		if (in_array($action, ['preview_recurring', 'create_recurring'], true)) {
+			$this->booking_type = self::BOOK_RECUR;
+		} elseif ($action === 'create' || !empty($owned_bookings) || $remaining_capacity < 1) {
 			$this->booking_type = self::BOOK_SINGLE;
 		}
 		$this->slot_header = [
@@ -342,6 +346,20 @@ class SingleAgent extends BaseAgent
 	 */
 	private function create_single_booking()
 	{
+		$this->check_constraints();
+		$day_field = 'day_' . $this->date_info->weekday;
+		$start = $this->session->date_start;
+		if (($this->session->is_current ?? false) && !has_permission(Permission::BK_SGL_CREATE) && !has_permission(Permission::BK_RECUR_CREATE)) {
+			$start = (new \DateTime())->setTime(0, 0, 0);
+		}
+		$date_unavailable = !empty($this->date_info->holiday_id)
+			|| (isset($this->period->{$day_field}) && $this->period->{$day_field} != 1)
+			|| $this->datetime < $start || $this->datetime > $this->session->date_end;
+		if (!has_permission(Permission::BK_SGL_CREATE, $this->room->room_id) || $this->constraint_applied || $date_unavailable
+			|| !$this->creation_slot_allowed($this->datetime, $this->period->period_id, $this->room->room_id)) {
+			$this->message = $this->constraint_message ?: lang('booking.error.no_permission_room_date');
+			return FALSE;
+		}
 		$target_user_id = (int) $this->user->user_id;
 		if (has_permission(Permission::BK_SGL_SET_USER, $this->room->room_id)) {
 			$target_user_id = (int) $this->CI->input->post('user_id');
@@ -390,20 +408,45 @@ class SingleAgent extends BaseAgent
 			$booking_data['user_id'] = !empty($post_user_id) ? $post_user_id : null;
 		}
 
-		$booking_id = $this->CI->bookings_model->create($booking_data);
-
-		if ($booking_id) {
-			$this->success = TRUE;
-			$this->message = lang('booking.success.created');
-			return TRUE;
+		if ($this->CI->db->trans_active() || !$this->CI->db->trans_begin()) {
+			$this->message = lang('booking.error.not_created');
+			return FALSE;
 		}
+		$committed = FALSE;
+		try {
+			// create() nests its CI transaction; this outer transaction owns the
+			// actual commit and retains the user lock through the write.
+			$quota_row = $booking_data + ['created_by' => $this->user->user_id];
+			$quota = $this->CI->users_model->lock_scheduled_booking_quota((int) $this->user->user_id, [$quota_row]);
+			if ($quota === FALSE) {
+				$this->message = lang('booking.error.not_created');
+				return FALSE;
+			}
+			$limit = $this->CI->users_model->get_constraints($this->user->user_id)['max_active_bookings'];
+			if ($limit !== NULL && $quota['requested'] > 0 && $quota['count'] + $quota['requested'] > (int) $limit) {
+				$this->message = lang('booking.error.must_select_fewer');
+				return FALSE;
+			}
 
-		$err = $this->CI->bookings_model->get_error();
-
-		$this->message = $err ?: lang('booking.error.not_created')
-			;
-
-		return FALSE;
+			$booking_id = $this->CI->bookings_model->create($booking_data);
+			if ($booking_id && $this->CI->db->trans_status()) {
+				$committed = $this->CI->db->trans_commit();
+			}
+			if ($committed) {
+				$this->success = TRUE;
+				$this->message = lang('booking.success.created');
+				return TRUE;
+			}
+			$err = $this->CI->bookings_model->get_error();
+			$this->message = $err ?: lang('booking.error.not_created');
+			return FALSE;
+		} finally {
+			if (!$committed) {
+				while ($this->CI->db->trans_active()) {
+					if (!$this->CI->db->trans_rollback()) break;
+				}
+			}
+		}
 	}
 
 
@@ -413,6 +456,10 @@ class SingleAgent extends BaseAgent
 	 */
 	private function preview_single_recurring()
 	{
+		if (!has_permission(Permission::BK_RECUR_CREATE, $this->room->room_id) || !is_array($this->recurring_dates) || !$this->recurring_dates) {
+			$this->message = lang('booking.error.no_permission_room');
+			return FALSE;
+		}
 		$rules = [
 			['field' => 'capacity', 'label' => 'lang:booking.capacity', 'rules' => 'required|integer|greater_than[0]'],
 		];
@@ -466,6 +513,10 @@ class SingleAgent extends BaseAgent
 
 		$recurring_start = datetime_from_string($recurring_start);
 		$recurring_end = datetime_from_string($recurring_end);
+		if (!$recurring_start || !$recurring_end) {
+			$this->message = lang('app.form_error');
+			return FALSE;
+		}
 
 		if ($recurring_end < $recurring_start) {
 			$line = lang('booking.error.invalid_recurring_dates');
@@ -521,9 +572,12 @@ class SingleAgent extends BaseAgent
 				}
 			}
 
-			$can_book = !$duplicate_user && $remaining_capacity >= $booking_capacity;
+			$date_eligible = $this->creation_slot_allowed($slot['datetime'], $this->period->period_id, $this->room->room_id);
+			$can_book = $date_eligible && !$duplicate_user && $remaining_capacity >= $booking_capacity;
 			$actions = [];
-			if ($can_book) {
+			if (!$date_eligible) {
+				$actions['do_not_book'] = lang('booking.do_not_book');
+			} elseif ($can_book) {
 				$actions['book'] = lang('booking.book');
 				$actions['do_not_book'] = lang('booking.do_not_book');
 				$num_bookable++;
@@ -539,6 +593,7 @@ class SingleAgent extends BaseAgent
 			$slots[$key]['bookings'] = $bookings;
 			$slots[$key]['booked_capacity'] = $booked_capacity;
 			$slots[$key]['remaining_capacity'] = $remaining_capacity;
+			$slots[$key]['date_eligible'] = $date_eligible;
 			$slots[$key]['can_book'] = $can_book;
 			$slots[$key]['duplicate_user'] = $duplicate_user;
 			$slots[$key]['actions'] = $actions;
@@ -577,6 +632,10 @@ class SingleAgent extends BaseAgent
 	 */
 	private function create_single_recurring()
 	{
+		if (!has_permission(Permission::BK_RECUR_CREATE, $this->room->room_id) || !is_array($this->recurring_dates) || !$this->recurring_dates) {
+			$this->message = lang('booking.error.no_permission_room');
+			return FALSE;
+		}
 		$dates = $this->CI->input->post('dates');
 
 		if (empty($dates) || !is_array($dates)) {
@@ -603,6 +662,10 @@ class SingleAgent extends BaseAgent
 		$end_bound = ($recurring_end === 'session')
 			? datetime_from_string($this->session->date_end)
 			: datetime_from_string($recurring_end);
+		if (!$start_bound || !$end_bound || $start_bound > $end_bound) {
+			$this->message = lang('app.form_error');
+			return FALSE;
+		}
 		foreach ($this->recurring_dates as $row) {
 			if ($row->date < $start_bound || $row->date > $end_bound) continue;
 			$allowed_dates[$row->date->format('Y-m-d')] = true;
@@ -621,10 +684,16 @@ class SingleAgent extends BaseAgent
 		$book_dates = [];
 		foreach ($dates as $date => &$info) {
 			if (!is_array($info) || !in_array($info['action'] ?? '', ['book', 'replace', 'do_not_book'], true)) {
-				$info = ['action' => 'do_not_book'];
-				continue;
+				$this->message = lang('app.form_error');
+				return FALSE;
 			}
-			if (in_array($info['action'], ['book', 'replace'], true)) $book_dates[] = $date;
+			if (in_array($info['action'], ['book', 'replace'], true)) {
+				if (!$this->creation_slot_allowed($date, $this->period->period_id, $this->room->room_id)) {
+					$this->message = lang('booking.error.no_permission_room_date');
+					return FALSE;
+				}
+				$book_dates[] = $date;
+			}
 		}
 		unset($info);
 
@@ -689,8 +758,6 @@ class SingleAgent extends BaseAgent
 			$this->message = lang('booking.capacity.recurring.none');
 			return FALSE;
 		}
-
-
 		$repeat_data = [
 			'session_id' => $this->session->session_id,
 			'period_id' => $this->period->period_id,
@@ -705,19 +772,24 @@ class SingleAgent extends BaseAgent
 			'dates' => $dates,
 		];
 
-		if (has_permission(Permission::BK_SGL_SET_USER, $this->room->room_id)) {
+		if (has_permission(Permission::BK_RECUR_SET_USER, $this->room->room_id)) {
 			// Allow user to be changed
 			$post_user_id = $this->CI->input->post('user_id');
 			$repeat_data['user_id'] = !empty($post_user_id) ? $post_user_id : null;
 		}
 
-		if (has_permission(Permission::BK_SGL_SET_DEPT, $this->room->room_id)) {
+		if (has_permission(Permission::BK_RECUR_SET_DEPT, $this->room->room_id)) {
 			$post_department_id = $this->CI->input->post('department_id');
 			if ( ! empty($post_department_id)) {
 				$repeat_data['department_id'] = $post_department_id;
 			}
 		}
 
+		// A nested CI transaction cannot report a durable commit to this agent.
+		if ($this->CI->db->trans_active()) {
+			$this->message = lang('booking.error.not_created');
+			return FALSE;
+		}
 		// bookings_repeat_model will also handle creation of individual bookings.
 		$repeat_id = $this->CI->bookings_repeat_model->create($repeat_data);
 
@@ -732,6 +804,5 @@ class SingleAgent extends BaseAgent
 			: sprintf(lang('booking.success.recurring.created'), $selected_count);
 		return TRUE;
 	}
-
 
 }
